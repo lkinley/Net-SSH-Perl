@@ -1,0 +1,47 @@
+--- #YAML:1.0
+name                    : Net-SSH-Perl
+version                 : 1.38
+abstract                : Perl client interface to SSH
+author:              
+  - David Robins <dbrobins@cpan.org>
+
+license                 : perl
+distribution_type       : module
+dynamic_config          : 1
+
+requires:     
+  Convert::PEM          : 0.05
+  Crypt::DES            : 0
+  Crypt::DH             : 0.01
+  Crypt::DSA            : 0.11
+  Crypt::IDEA           : 0
+  Digest::HMAC_MD5      : 0
+  Digest::HMAC_SHA1     : 0
+  Digest::MD5           : 0
+  Digest::SHA1          : 2.10
+  IO::Socket            : 0
+  Math::GMP             : 1.04
+  Math::Pari            : 2.001804
+  MIME::Base64          : 0
+  Scalar::Util          : 0
+  String::CRC32         : 1.2
+build_requires:
+  Test::More            : 0.61
+recommends:
+  Module::Signature     : 0.50
+  Digest::BubbleBabble  : 0
+  Crypt::RSA            : 0
+  Term::ReadKey         : 0
+
+resources:
+  homepage              : http://search.cpan.org/dist/Net-SSH-Perl/
+  license               : http://dev.perl.org/licenses/
+  bugtracker            : http://rt.cpan.org/Public/Dist/Display.html?Name=Net-SSH-Perl
+  MailingList           : https://lists.sourceforge.net/lists/listinfo/ssh-sftp-perl-users
+  Repository            : http://sourceforge.net/projects/ssh-sftp-perl/
+
+meta-spec:
+  version               : 1.4
+  url                   : http://module-build.sourceforge.net/META-spec-v1.4.html
+
+generated_by            : emacs

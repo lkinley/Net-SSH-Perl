@@ -1,0 +1,95 @@
+$Id: README,v 1.23 2008/10/02 18:53:54 turnstep Exp $
+
+This is Net::SSH::Perl. It contains implementations of
+both the SSH1 and SSH2 protocols.
+
+PREREQUISITES
+
+Protocol 1
+
+    * Math::GMP (1.04 or greater)
+    * String::CRC32 (1.2 or greater)
+    * Digest::MD5
+    * IO::Socket
+
+Protocol 2
+
+    * Crypt::DSA (0.03 or greater)
+    * Crypt::DH (0.01 or greater)
+    * Math::Pari (2.001804 or greater)
+    * MIME::Base64
+    * Digest::MD5
+    * Digest::SHA1
+    * Digest::HMAC_MD5
+    * Digest::HMAC_SHA1
+    * Convert::PEM (0.05 or greater)
+    * IO::Socket
+
+It also optionally requires Digest::BubbleBabble for
+generating bubble babble fingerprints, and Crypt::RSA
+(1.37 or greater) if you want to use RSA key files in SSH2.
+
+Note that RSA key files in SSH1 do not require Crypt::RSA.
+
+INSTALLATION
+
+Net::SSH::Perl installation is relatively straightforward. If
+your CPAN shell is set up, you should just be able to do
+
+    % perl -MCPAN -e 'install Net::SSH::Perl'
+
+If you don't like that, you can download the distribution; the
+latest version on CPAN can be found at
+
+	http://search.cpan.org/dist/Net-SSH-Perl/
+
+Download it, unpack it, then build it as per the usual:
+
+    % perl Makefile.PL
+    % make && make test
+
+Then install it:
+
+    % make install
+
+If you have problems, read on.
+
+The only slightly complicated bit in the installation is
+that you'll need to install Crypt:: modules depending on
+which ciphers you wish to use. Much work has gone into
+making this simple; you should be asked a question about
+which ciphers you'll use, and the modules should be
+downloaded and installed automatically.
+
+If it doesn't work, or if you don't like this option, you'll
+need to do the installations manually. In which case you'll
+need to install the prerequisites listed above for your
+chosen protocol, plus any additional Crypt:: modules you
+wish to use.
+
+SAMPLES/TUTORIALS
+
+Take a look at the scripts in eg/ for help and examples of
+using Net::SSH::Perl.
+
+* eg/cmd.pl is just a simple example of some of the
+functionality in the module;
+
+# eg/pssh is an ssh-like client for running commands on
+remote servers and connecting to a shell on remote servers;
+
+* eg/pscp is a very simple scp-like script;
+
+* eg/pssh-keygen is, as you might guess, an implementation of
+ssh-keygen in Perl, using the Net::SSH::Perl key libraries.
+It contains almost all of the functionality in the OpenSSH
+version of ssh-keygen.
+
+* eg/remoteinteract.pl is an example of using register_handler
+to interact with a remote (interactive) command.
+
+Both pssh and pscp support a subset of the command line options
+that the actual tools support; obviously, only those options
+supported by Net::SSH::Perl are supported by the two scripts.
+
+David Robins / dbrobins@cpan.org
