@@ -113,7 +113,7 @@ use vars qw( %CONSTANTS );
     'KEX_DH1' => 'diffie-hellman-group1-sha1',
     'KEX_DEFAULT_KEX' => 'diffie-hellman-group1-sha1',
     'KEX_DEFAULT_PK_ALG' => 'ssh-dss,ssh-rsa',
-    'KEX_DEFAULT_ENCRYPT' => '3des-cbc,blowfish-cbc,arcfour',
+    'KEX_DEFAULT_ENCRYPT' => 'aes128-ctr,aes192-ctr,aes256-ctr,3des-cbc,blowfish-cbc,arcfour',
     'KEX_DEFAULT_MAC' => 'hmac-sha1,hmac-md5',
     'KEX_DEFAULT_COMP' => 'none,zlib',
     'KEX_DEFAULT_LANG' => '',

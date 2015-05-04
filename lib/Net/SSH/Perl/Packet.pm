@@ -161,7 +161,7 @@ sub read_poll_ssh2 {
         $comp = $kex->receive_comp;
     }
     my $maclen = $mac && $mac->enabled ? $mac->len : 0;
-    my $block_size = 8;
+    my $block_size = $ciph ? $ciph->blocksize : 8;
 
     my $incoming = $ssh->incoming_data;
     if (!$ssh->{session}{_last_packet_length}) {
@@ -288,7 +288,7 @@ sub send_ssh2 {
         $mac  = $kex->send_mac;
         $comp = $kex->send_comp;
     }
-    my $block_size = 8;
+    my $block_size = $ciph ? $ciph->blocksize : 8;
 
     if ($comp && $comp->enabled) {
         my $compressed = $comp->compress($buffer->bytes);

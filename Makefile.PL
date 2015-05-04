@@ -58,6 +58,7 @@ my @cryptmod = (
     [ 'DES3', 'Crypt::DES' ],
     [ 'Blowfish', 'Crypt::Blowfish' ],
     [ 'RC4', '' ],
+    [ 'AES', 'Crypt::OpenSSL::AES' ],
 );
 
 print<<MSG;
