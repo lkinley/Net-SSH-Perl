@@ -18,6 +18,7 @@ my %SSH_PREREQ = (
 
     2 => {
         'Digest::SHA1'      => '2.10',
+        'Digest::SHA2'      => '1.1.1',
         'Digest::HMAC_MD5'  => 0,
         'Digest::HMAC_SHA1' => 0,
         'Crypt::DSA'        => '0.11',

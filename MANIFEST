@@ -42,7 +42,10 @@ lib/Net/SSH/Perl/Handle.pm
 lib/Net/SSH/Perl/Handle/SSH1.pm
 lib/Net/SSH/Perl/Handle/SSH2.pm
 lib/Net/SSH/Perl/Kex.pm
+lib/Net/SSH/Perl/Kex/DH.pm
 lib/Net/SSH/Perl/Kex/DH1.pm
+lib/Net/SSH/Perl/Kex/DH14.pm
+lib/Net/SSH/Perl/Kex/DHGEX256.pm
 lib/Net/SSH/Perl/Key.pm
 lib/Net/SSH/Perl/Key/DSA.pm
 lib/Net/SSH/Perl/Key/RSA.pm

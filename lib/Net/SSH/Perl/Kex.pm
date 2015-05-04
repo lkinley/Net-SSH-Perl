@@ -4,6 +4,8 @@ package Net::SSH::Perl::Kex;
 use strict;
 
 use Net::SSH::Perl::Kex::DH1;
+use Net::SSH::Perl::Kex::DH14;
+use Net::SSH::Perl::Kex::DHGEX256;
 use Net::SSH::Perl::Cipher;
 use Net::SSH::Perl::Mac;
 use Net::SSH::Perl::Comp;
@@ -160,7 +162,7 @@ sub derive_keys {
     my($hash, $shared_secret, $session_id) = @_;
     my @keys;
     for my $i (0..5) {
-        push @keys, derive_key(ord('A')+$i, $kex->{we_need}, $hash,
+        push @keys, $kex->derive_key(ord('A')+$i, $kex->{we_need}, $hash,
 			       $shared_secret, $session_id);
     }
     my $is_ssh2 = $kex->{ssh}->protocol == PROTOCOL_SSH2;
@@ -171,17 +173,6 @@ sub derive_keys {
         $kex->{mac}[$mode]->init($keys[$ctos ? 4 : 5]);
         $kex->{comp}[$mode]->init(6) if $kex->{comp}[$mode];
     }
-}
-
-sub derive_key {
-    my($id, $need, $hash, $shared_secret, $session_id) = @_;
-    my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
-    $b->put_mp_int($shared_secret);
-    my $digest = sha1($b->bytes, $hash, chr($id), $session_id);
-    for (my $have = 20; $need > $have; $have += 20) {
-        $digest .= sha1($b->bytes, $hash, $digest);
-    }
-    $digest;
 }
 
 sub choose_conf {
@@ -217,7 +208,13 @@ sub choose_kex {
     my $name = _get_match(@_);
     croak "No kex algorithm" unless $name;
     $kex->{algorithm} = $name;
-    if ($name eq KEX_DH1) {
+    if ($name eq KEX_DH_GEX_SHA256) {
+        $kex->{class_name} = __PACKAGE__ . "::DHGEX256";
+    }
+    elsif ($name eq KEX_DH14) {
+        $kex->{class_name} = __PACKAGE__ . "::DH14";
+    }
+    elsif ($name eq KEX_DH1) {
         $kex->{class_name} = __PACKAGE__ . "::DH1";
     }
     else {
@@ -318,5 +315,8 @@ algorithms.
 
 Please see the Net::SSH::Perl manpage for author, copyright,
 and license information.
+
+Modifications for enabling new DH Key Exchange mechanisms by:
+Lance Kinley E<lkinley@loyaltymethods.com>
 
 =cut

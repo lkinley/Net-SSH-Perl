@@ -20,6 +20,7 @@ Protocol 2
     * MIME::Base64
     * Digest::MD5
     * Digest::SHA1
+    * Digest::SHA2
     * Digest::HMAC_MD5
     * Digest::HMAC_SHA1
     * Convert::PEM (0.05 or greater)
