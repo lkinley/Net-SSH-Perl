@@ -73,7 +73,7 @@ sub read_private_pem {
     chomp(my $desc = <$fh>);
     close $fh or warn qq{Could not close "$keyfile": $!\n};
     return unless $desc;
-    my($object) = $desc =~ /^-----?\s?BEGIN ([^\n\-]+)\s?-?----$/;
+    my($object) = $desc =~ /^-----?\s?BEGIN ([^\n\-]+)\s?-?----\s*$/;
     $object =~ s/\s*$//;
     my $rec = $OBJ_MAP{$object} or return;
     $class = __PACKAGE__ . "::" . $rec->[0];
