@@ -9,6 +9,8 @@ use vars qw( %MAC %MAC_REVERSE %SUPPORTED );
 %MAC = (
     'hmac-sha1' => 'SHA1',
     'hmac-md5'  => 'MD5',
+    'hmac-sha2-256'  => 'SHA2_256',
+    'hmac-sha2-512'  => 'SHA2_512',
 );
 
 sub new {
@@ -61,6 +63,46 @@ sub hmac {
 }
 
 sub len { 20 }
+
+package Net::SSH::Perl::Mac::SHA2_256;
+use strict;
+use vars qw( @ISA );
+@ISA = qw( Net::SSH::Perl::Mac );
+
+sub hmac {
+    my $mac = shift;
+    my $data = shift;
+    Digest::HMAC::hmac($data, $mac->{key}, \&Digest::SHA2::compat::sha2_256, 64)
+}
+
+sub len { 32 }
+
+package Net::SSH::Perl::Mac::SHA2_512;
+use strict;
+use vars qw( @ISA );
+@ISA = qw( Net::SSH::Perl::Mac );
+
+sub hmac {
+    my $mac = shift;
+    my $data = shift;
+    Digest::HMAC::hmac($data, $mac->{key}, \&Digest::SHA2::compat::sha2_512, 128)
+}
+
+sub len { 64 }
+
+package Digest::SHA2::compat;
+use strict;
+use Digest::SHA2;
+
+sub sha2 { _sha2(256,@_) }
+sub sha2_256 { _sha2(256,@_) }
+sub sha2_512 { _sha2(512,@_) }
+
+sub _sha2 {
+    my $sha2 = Digest::SHA2->new(shift);
+    $sha2->add(@_);
+    $sha2->digest;
+}
 
 1;
 __END__
@@ -147,5 +189,10 @@ or not to compute a MAC on an outgoing packet.
 
 Please see the Net::SSH::Perl manpage for author, copyright,
 and license information.
+
+hmac-sha2-256 and hmac-sha2-512 support added by:
+Lance Kinley E<lkinley@loyaltymethods.com>
+
+Copyright (c) 2015 Loyalty Methods, Inc.
 
 =cut
