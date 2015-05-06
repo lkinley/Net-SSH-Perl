@@ -42,7 +42,7 @@ sub exchange {
     $packet->send;
 
     # step 2 in rfc 4419
-    $ssh->debug("Sent DH Group Exchange Request, waiting for reply.");
+    $ssh->debug('Sent DH Group Exchange request, waiting for reply.');
     $packet = Net::SSH::Perl::Packet->read_expect($ssh,
         SSH2_MSG_KEX_DH_GEX_GROUP);
     my $p = $packet->get_mp_int;
@@ -50,18 +50,19 @@ sub exchange {
     # range check on p
     my $p_bits = bitsize($p);
     if ($p_bits < $kex->min_bits || $p_bits > $kex->max_bits) {
-        $ssh->fatal_disconnect("DH Group Exchange reply out of range");
+        $ssh->fatal_disconnect('DH Group Exchange reply out of range');
     }
     $ssh->debug("Received DH Group Exchange reply.");
 
     # step 3 in rfc 4419
-    $ssh->debug('Generating new Diffie-Hellman Group Exchange keys');
+    $ssh->debug('Generating new Diffie-Hellman keys.');
     my $dh = $kex->_dh_new_group($p,$g);
 
-    $ssh->debug("Sent DH public key, waiting for reply.");
+    $ssh->debug('Entering Diffie-Hellman key exchange.');
     $packet = $ssh->packet_start(SSH2_MSG_KEX_DH_GEX_INIT);
     $packet->put_mp_int($dh->pub_key);
     $packet->send;
+    $ssh->debug('Sent DH public key, waiting for reply.');
 
     # step 4 in rfc 4419
     $packet = Net::SSH::Perl::Packet->read_expect($ssh,
@@ -81,10 +82,8 @@ sub exchange {
     $ssh->fatal_disconnect("Bad server public DH value")
         unless _pub_is_valid($dh, $dh_server_pub);
 
-    $ssh->debug("Computing shared secret key.");
     my $shared_secret = $dh->compute_key($dh_server_pub);
 
-    $ssh->debug("Computing HASH.");
     my $hash = $kex->kex_hash(
         $ssh->client_version_string,
         $ssh->server_version_string,

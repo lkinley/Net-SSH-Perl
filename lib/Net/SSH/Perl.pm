@@ -287,7 +287,7 @@ sub _read_version {
     do {
         $line = $ssh->_read_version_line;
     } while (substr($line, 0, 4) ne "SSH-");
-    $ssh->debug("Remote version string: $line");
+    $ssh->debug("Remote version string: " . substr($line,0,length($line)-2));
     return $line;
 }
 
@@ -299,7 +299,7 @@ sub _exchange_identification {
     my $remote_id = $ssh->_read_version;
     ($ssh->{server_version_string} = $remote_id) =~ s/\cM?\n$//;
     my($remote_major, $remote_minor, $remote_version) = $remote_id =~
-        /^SSH-(\d+)\.(\d+)-([^\n]+)\n$/;
+        /^SSH-(\d+)\.(\d+)-([^\n]+)\r\n$/;
     $ssh->debug("Remote protocol version $remote_major.$remote_minor, remote software version $remote_version");
 
     my $proto = $ssh->config->get('protocol');
