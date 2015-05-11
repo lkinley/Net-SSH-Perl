@@ -1,17 +1,21 @@
 Revision history for Net::SSH::Perl
 
-2.00 2015.05.05
+2.00 2015.05.10
 
     - Add AES Cipher support in CTR mode for better security
     - Add Group 14 Diffie-Hellman Key Exchange
     - Add Group Exchange (RFC4523) Diffie-Hellman Key Exchange
-      (preferred DH method for security)
+    - Add Curve25519 (curve25519-sha256@libssh.org) Key Exchange support
+      (Requires Crypt::Curve25519)
     - Add hmac-sha2-256,hmac-sha2-512 MAC support
+    - Add support for Ed25519 ssh/host keys (Requires Crypt::Ed25519)
     - Default ciphers order is now aes,3des,blowfish,arcfour
-    - Default DH KEX order is now DHGEX256, DH14, DH1
-    - Default MAC order is now sha2-256, sha2-512, sha1, md5
+    - Default KEX order is now Curve25519, DHGEXSHA256, DH14, DH1
+    - Default MAC order is now sha2-512, sha2-256, sha1, md5
     - SSH Keys can now be in DOS format (no need to remove CR/LF)
     - SOCKS proxy support via sub class Net::SSH:Perl::Proxy
+    - Now does not abort due to OpenSSH 6.8+ server
+      SSH2_MSG_GLOBAL_REQUEST messages for host key rotation
 
 1.38 2014.10.06
 

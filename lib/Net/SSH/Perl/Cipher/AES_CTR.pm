@@ -60,7 +60,7 @@ CTR (counter) mode.
 
 =head1 DESCRIPTION
 
-I<Net::SSH::Perl::Cipher::AES_CTR> provides AES encryption
+I<Net::SSH::Perl::Cipher::AES_CTR> provides AES CTR encryption
 base class support for I<Net::SSH::Perl>. 
 
 =head1 AUTHOR & COPYRIGHTS

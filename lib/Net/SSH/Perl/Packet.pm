@@ -13,6 +13,7 @@ use Net::SSH::Perl::Constants qw(
     SSH_MSG_DISCONNECT
     SSH_MSG_DEBUG
     SSH_MSG_IGNORE
+    SSH2_MSG_GLOBAL_REQUEST
     SSH2_MSG_DISCONNECT
     SSH2_MSG_DEBUG
     SSH2_MSG_IGNORE
@@ -219,9 +220,16 @@ sub read_expect {
     my($ssh, $type) = @_;
     my $pack = $class->read($ssh);
     if ($pack->type != $type) {
-        $ssh->fatal_disconnect(sprintf
-          "Protocol error: expected packet type %d, got %d",
-            $type, $pack->type);
+        if ($pack->type == SSH2_MSG_GLOBAL_REQUEST) {
+            # handle global request (they can come any time)
+            # XXX TODO
+            # now repeat read_expect for expected type
+            return $class->read_expect($ssh,$type);
+        } else {
+            $ssh->fatal_disconnect(sprintf
+              "Protocol error: expected packet type %d, got %d",
+                $type, $pack->type);
+        }
     }
     $pack;
 }

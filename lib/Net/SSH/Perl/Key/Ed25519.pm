@@ -1,0 +1,297 @@
+package Net::SSH::Perl::Key::Ed25519;
+use strict;
+
+use Net::SSH::Perl::Buffer;
+use Net::SSH::Perl::Constants qw( SSH_COMPAT_BUG_SIGBLOB );
+use Net::SSH::Perl::Util qw( :ssh2mp );
+
+use Net::SSH::Perl::Key;
+use base qw( Net::SSH::Perl::Key );
+
+use MIME::Base64;
+use Crypt::Ed25519;
+use Carp qw( croak );
+
+use constant MARK_BEGIN => "-----BEGIN OPENSSH PRIVATE KEY-----\n";
+use constant MARK_END   => "-----END OPENSSH PRIVATE KEY-----\n";
+use constant AUTH_MAGIC => "openssh-key-v1\0";
+use constant ED25519_SK_SZ => 64;
+use constant ED25519_PK_SZ => 32;
+
+sub supported_cipers { qw(aes128-ctr aes192-ctr aes256-ctr aes256-cbc 3des-cbc blowfish arcfour) }
+
+sub ssh_name { 'ssh-ed25519' }
+
+sub init {
+    my $key = shift;
+    my($blob, $datafellows) = @_;
+
+    if ($blob) {
+        my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+        $b->append($blob);
+        my $ktype = $b->get_str;
+        croak __PACKAGE__, "->init: cannot handle type '$ktype'"
+            unless $ktype eq $key->ssh_name;
+        $key->{pub} = $b->get_str;
+    }
+}
+
+sub keygen {
+    my $class = shift;
+    my $key = $class->new(undef);
+    $key->{comment} = shift;
+    ($key->{pub},$key->{priv}) = Crypt::Ed25519::generate_keypair;
+    $key;
+}
+
+sub read_private {
+    my $class = shift;
+    my($key_file, $passphrase) = @_;
+
+    local *FH;
+    open FH, $key_file or return;
+    my $content = do { local $/; <FH> };
+    close FH;
+    my $blob = decode_base64(substr($content,length(MARK_BEGIN),length($content)-length(MARK_END)-length(MARK_BEGIN)));
+    my $str = AUTH_MAGIC;
+    croak "Invalid key format" unless $blob =~ /^${str}/;
+
+    my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+    $b->append($blob);
+    $b->consume(length(AUTH_MAGIC));
+
+    #$class->_print($b->bytes);
+
+    my $ciphername = $b->get_str;
+    croak "Key encrypted with unsupported cipher '$ciphername'"
+        if !grep("$ciphername",$class->supported_cipers);
+
+    my $kdfname = $b->get_str;
+    my $kdf = $b->get_str;
+    my $nkeys = $b->get_int32;
+    my $pub_key = $b->get_str;
+    my $encrypted = $b->get_str;
+
+    croak 'Wrong passphrase'
+        if !$passphrase && $ciphername ne 'none';
+
+    croak 'Unknown cipher'
+        if $kdfname ne 'none' && $kdfname ne 'bcrypt';
+
+    croak 'Invalid format'
+        if $kdfname ne 'none' && $ciphername eq 'none';
+
+    croak 'Invalid format: nkeys > 1'
+        if $nkeys != 1;
+
+    my $decrypted;
+    if ($ciphername eq 'none') {
+        $decrypted = $encrypted;
+    } else {
+        croak 'Encrypted private keys not supported (yet)';
+
+        # XXX TODO
+        my $cipher = Net::SSH::Perl::Cipher->new($ciphername);
+        croak "Cannot load cipher" unless $cipher;
+
+        croak 'Invalid format'
+            if length($encrypted) < $cipher->blocksize || length($encrypted) % $cipher->blocksize;
+
+        if ($kdfname eq 'bcrypt') {
+            my $salt = $b->get_str;
+            my $rounds = $b->get_int32;
+        }
+    }
+
+    $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+    $b->append($decrypted);
+    my $check1 = $b->get_int32;
+    my $check2 = $b->get_int32;
+    croak 'Wrong passphrase (check)' if $check1 != $check2;
+    my $type = $b->get_str;
+    croak 'Wrong key type' unless $type eq $class->ssh_name;
+    $pub_key = $b->get_str;
+    my $priv_key = $b->get_str;
+    my $comment = $b->get_str;
+
+    croak 'Invalid format'
+        if length($pub_key) != ED25519_PK_SZ || length($priv_key) != ED25519_SK_SZ;
+
+    my $key = $class->new(undef);
+    $key->{comment} = $comment;
+    $key->{pub} = $pub_key;
+    $key->{priv} = $priv_key;
+    $key;
+}
+
+sub write_private {
+    my $key = shift;
+    my($key_file, $passphrase) = @_;
+
+    my $ciphername = 'none';
+    my $kdfname = 'none';
+    my $kdf;
+    my $blocksize;
+    if ($passphrase) {
+        croak 'Encrypted key files not supported (yet)';
+        # XXX TODO
+        #$blocksize = $cipher->blocksize;
+    } else {
+        $blocksize = 8;
+    }
+    my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+    $b->put_char(AUTH_MAGIC);
+    $b->put_str($ciphername);
+    $b->put_str($kdfname);
+    $b->put_str($kdf);
+    $b->put_int32(1); # one key
+
+    my $pub = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+    $pub->put_str($key->ssh_name);
+    $pub->put_str($key->{pub});
+    $b->put_str($pub->bytes);
+
+    my $kb = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+    my $checkint = int(rand(0xffffffff));
+    $kb->put_int32($checkint);
+    $kb->put_int32($checkint);
+    $kb->put_str($key->ssh_name);
+    $kb->put_str($key->{pub});
+    $kb->put_str($key->{priv});
+    $kb->put_str($key->{comment});
+    if (my $r = length($kb->bytes) % $blocksize) {
+         $kb->put_char(chr($_)) foreach (1..$blocksize-$r);
+    }
+    $b->put_str($kb->bytes);
+
+    local *FH;
+    open FH, ">$key_file" or die "Cannot write key file";
+    print FH MARK_BEGIN;
+    print FH encode_base64($b->bytes); 
+    print FH MARK_END;
+    close FH;
+}
+
+sub dump_public { $_[0]->ssh_name . ' ' . encode_base64( $_[0]->as_blob, '') . ' ' . $_[0]->{comment} }
+
+sub sign {
+    my $key = shift;
+    my($data) = @_;
+    my $dsa = Crypt::DSA->new;
+    my $sig = Crypt::Ed25519::sign($data, $key->{pub}, $key->{priv});
+
+    my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+    $b->put_str($key->ssh_name);
+    $b->put_str($sig);
+    $b->bytes;
+}
+
+sub verify {
+    my $key = shift;
+    my($signature, $data) = @_;
+    my $sigblob;
+
+    my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+    $b->append($signature);
+    my $ktype = $b->get_str;
+    croak "Can't verify type ", $ktype unless $ktype eq $key->ssh_name;
+    $sigblob = $b->get_str;
+    croak "Invalid format" unless length($sigblob) == 64;
+
+    Crypt::Ed25519::verify($data,$key->{pub},$sigblob);
+}
+
+sub equal {
+    my($keyA, $keyB) = @_;
+    $keyA->{pub} && $keyB->{pub} &&
+    $keyA->{pub} == $keyB->{pub};
+}
+
+sub as_blob {
+    my $key = shift;
+    my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+    $b->put_str($key->ssh_name);
+    $b->put_str($key->{pub});
+    $b->bytes;
+}
+
+sub fingerprint_raw { $_[0]->as_blob }
+
+sub _print {
+    my $key = shift;
+    my $bytes = shift;
+    for (my $i=0; $i<length($bytes); $i++) {
+	    my $char = substr($bytes,$i,1);
+	    if (ord($char) > 32 && ord($char) < 127) {
+		    print ' ',chr(ord($char)),' ';
+	    } else {
+		    print unpack('H*',$char),' ';
+	    }
+    }
+    print "\n";
+}
+
+
+1;
+__END__
+
+=head1 NAME
+
+Net::SSH::Perl::Key::Ed25519 - Ed25519 key object
+
+=head1 SYNOPSIS
+
+    use Net::SSH::Perl::Key;
+    my $key = Net::SSH::Perl::Key->new('Ed25519');
+
+=head1 DESCRIPTION
+
+I<Net::SSH::Perl::Key::Ed25519> subclasses I<Net::SSH::Perl::Key>
+to implement an OpenSSH key object.  It uses the Crypt::Ed25519
+module to do the crypto heavy liftign.  The I<Net::SSH::Perl::Buffer>
+class is used to create blobs and transforms those it into a key 
+object and to write keys to an openssh-key-v1 file.
+
+=head1 USAGE
+
+I<Net::SSH::Perl::Key::Ed25519> implements the interface described in
+the documentation for I<Net::SSH::Perl::Key>. Any differences or
+additions are described here.
+
+=head2 $key->sign($data)
+
+Uses I<Crypt::Ed25519> to sign I<$data> using the private and public
+key portions of I<$key>, then encodes that signature into an
+SSH-compatible signature blob.
+
+Returns the signature blob.
+
+=head2 $key->verify($signature, $data)
+
+Given a signature blob I<$signature> and the original signed data
+I<$data>, attempts to verify the signature using the public key
+portion of I<$key>. This uses I<Crypt::Ed25519::verify> to
+perform the core verification.
+
+I<$signature> should be an SSH-compatible signature blob, as
+returned from I<sign>; I<$data> should be a string of data, as
+passed to I<sign>.
+
+Returns true if the verification succeeds, false otherwise.
+
+=head2 Net::SSH::Perl::Key::Ed25519->keygen($comment)
+
+Uses I<Crypt::Ed25519> to generate a new key with comment.
+
+=head1 AUTHOR & COPYRIGHTS
+
+Lance Kinley E<lkinley@loyaltymethods.com>
+
+Copyright (c) 2015 Loyalty Methods, Inc.
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

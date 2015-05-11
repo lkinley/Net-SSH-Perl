@@ -22,6 +22,7 @@ use vars qw( %KEY_TYPES );
 %KEY_TYPES = (
     'ssh-dss' => 'DSA',
     'ssh-rsa' => 'RSA',
+    'ssh-ed25519' => 'Ed25519',
 );
 
 sub new_from_blob {
@@ -64,6 +65,7 @@ use vars qw( %OBJ_MAP );
     'DSA PRIVATE KEY'  => [ 'DSA' ],
     'SSH2 ENCRYPTED PRIVATE KEY' => [ 'DSA', [ 'SSH2' ] ],
     'RSA PRIVATE KEY'  => [ 'RSA' ],
+    'OPENSSH PRIVATE KEY'  => [ 'Ed25519' ],
 );
 
 sub read_private_pem {

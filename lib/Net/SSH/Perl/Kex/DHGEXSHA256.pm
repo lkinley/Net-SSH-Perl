@@ -1,4 +1,4 @@
-package Net::SSH::Perl::Kex::DHGEX256;
+package Net::SSH::Perl::Kex::DHGEXSHA256;
 use strict;
 
 use Net::SSH::Perl::Buffer;
@@ -145,7 +145,7 @@ sub derive_key {
     my $sha2 = Digest::SHA2->new(256) or return;
     $sha2->add($b->bytes, $hash, chr($id), $session_id);
     my $digest = $sha2->digest;
-    for (my $have = 20; $need > $have; $have += 20) {
+    for (my $have = 32; $need > $have; $have += 32) {
         $sha2->reset;
         $sha2->add($b->bytes, $hash, $digest);
         $digest .= $sha2->digest;
@@ -194,7 +194,7 @@ __END__
 
 =head1 NAME
 
-Net::SSH::Perl::Kex::DHGEX256 - Diffie-Hellman Group Exchange
+Net::SSH::Perl::Kex::DHGEXSHA256 - Diffie-Hellman Group Exchange
 using SHA256 hashing.
 
 =head1 SYNOPSIS
@@ -207,7 +207,7 @@ using SHA256 hashing.
 
 =head1 DESCRIPTION
 
-I<Net::SSH::Perl::Kex::DHGEX256> implements Diffie-Hellman Group
+I<Net::SSH::Perl::Kex::DHGEXSHA256> implements Diffie-Hellman Group
 Exchange for I<Net::SSH::Perl>. It is a subclass of
 I<Net::SSH::Perl::Kex>.
 

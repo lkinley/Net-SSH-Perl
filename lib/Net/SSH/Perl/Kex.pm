@@ -3,9 +3,6 @@
 package Net::SSH::Perl::Kex;
 use strict;
 
-use Net::SSH::Perl::Kex::DH1;
-use Net::SSH::Perl::Kex::DH14;
-use Net::SSH::Perl::Kex::DHGEX256;
 use Net::SSH::Perl::Cipher;
 use Net::SSH::Perl::Mac;
 use Net::SSH::Perl::Comp;
@@ -19,7 +16,6 @@ use Net::SSH::Perl::Constants qw(
     SSH_COMPAT_BUG_HMAC );
 
 use Carp qw( croak );
-use Digest::SHA1 qw( sha1 );
 use Scalar::Util qw(weaken);
 
 use vars qw( @PROPOSAL );
@@ -208,13 +204,20 @@ sub choose_kex {
     my $name = _get_match(@_);
     croak "No kex algorithm" unless $name;
     $kex->{algorithm} = $name;
-    if ($name eq KEX_DH_GEX_SHA256) {
-        $kex->{class_name} = __PACKAGE__ . "::DHGEX256";
+    if ($name eq KEX_CURVE25519_SHA256) {
+        use Net::SSH::Perl::Kex::C25519;
+        $kex->{class_name} = __PACKAGE__ . "::C25519";
+    }
+    elsif ($name eq KEX_DH_GEX_SHA256) {
+        use Net::SSH::Perl::Kex::DHGEXSHA256;
+        $kex->{class_name} = __PACKAGE__ . "::DHGEXSHA256";
     }
     elsif ($name eq KEX_DH14) {
+        use Net::SSH::Perl::Kex::DH14;
         $kex->{class_name} = __PACKAGE__ . "::DH14";
     }
     elsif ($name eq KEX_DH1) {
+        use Net::SSH::Perl::Kex::DH1;
         $kex->{class_name} = __PACKAGE__ . "::DH1";
     }
     else {
@@ -225,7 +228,8 @@ sub choose_kex {
 sub choose_hostkeyalg {
     my $kex = shift;
     my $name = _get_match(@_);
-    croak "No hostkey algorithm" unless $name;
+    croak "No hostkey algorithm! CLIENT: $_[0] SERVER $_[1]" unless $name;
+    $kex->{ssh}->debug("Host key algorithm: $name");
     $kex->{hostkeyalg} = $name;
 }
 

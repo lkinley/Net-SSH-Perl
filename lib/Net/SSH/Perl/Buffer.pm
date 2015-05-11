@@ -3,6 +3,8 @@
 package Net::SSH::Perl::Buffer;
 use strict;
 
+use constant MAX_BIGNUM => 32;
+
 {
     my %MP_MAP = (
         SSH1 => [ "use Math::GMP;", \&_get_mp_int_ssh1, \&_put_mp_int_ssh1 ],
@@ -174,6 +176,37 @@ sub _put_mp_int_ssh2 {
     my $hasnohigh = (vec($bin, 0, 8) & 0x80) ? 0 : 1;
     $bin = "\0" . $bin unless $hasnohigh;
     $buf->put_str($bin);
+}
+
+sub put_bignum2_bytes {
+    my $buf = shift;
+    my $num = shift;
+
+    # skip leading zero bytes
+    substr($num,0,1,'') while ord(substr($num,0,1)) == 0;
+
+    # prepend a zero byte if mosting significant bit is set
+    # (to avoid interpretation as a negative number)
+    $num = "\0" . $num
+        if (ord(substr($num,0,1))) & 0x80;
+    $buf->put_str($num);
+}
+
+sub get_bignum2_bytes {
+    my $buf = shift;
+
+    my $num = $buf->get_str;
+    my $len = length($num);
+    return unless $len;
+    # refuse negative (MSB set) bignums
+    return if ord(substr($num,0,1)) & 0x80;
+    # refuse overlong bignums, allow prepended \0 to avoid MSB set
+    return if $len > MAX_BIGNUM+1 ||
+        ($len == MAX_BIGNUM+1 &&
+        ord(substr($num,0,1)) != 0);
+    # trim leading zero bytes
+    substr($num,0,1,'') while ord(substr($num,0,1)) == 0;
+    return $num;
 }
 
 1;
