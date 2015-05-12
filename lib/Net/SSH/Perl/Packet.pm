@@ -6,6 +6,7 @@ use strict;
 use Carp qw( croak );
 use IO::Select;
 use POSIX qw( :errno_h );
+use BSD::arc4random;
 
 use Net::SSH::Perl;
 use Net::SSH::Perl::Constants qw(
@@ -155,53 +156,79 @@ sub read_poll_ssh2 {
     my $ssh = shift;
     my $kex = $ssh->kex;
 
-    my($ciph, $mac, $comp);
+    my($ciph, $mac, $comp, $authlen);
     if ($kex) {
         $ciph = $kex->receive_cipher;
         $mac  = $kex->receive_mac;
         $comp = $kex->receive_comp;
+        undef $mac if $authlen = $ciph && $ciph->authlen;
     }
     my $maclen = $mac && $mac->enabled ? $mac->len : 0;
-    my $block_size = $ciph ? $ciph->blocksize : 8;
+    my $block_size = $ciph && $ciph->enabled ? $ciph->blocksize : 8;
+    my $aadlen = ($mac && $mac->enabled && $mac->etm) || $authlen ? 4 : 0;
 
     my $incoming = $ssh->incoming_data;
     if (!$ssh->{session}{_last_packet_length}) {
         return if $incoming->length < $block_size;
         my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
-        $b->append( $ciph && $ciph->enabled ?
-            $ciph->decrypt($incoming->bytes(0, $block_size)) : $incoming->bytes(0, $block_size)
-        );
-        $incoming->bytes(0, $block_size, $b->bytes);
+
+        if ($aadlen) {
+            $b->append($incoming->bytes(0, $block_size));
+        } else {
+            $b->append( $ciph && $ciph->enabled ?
+                $ciph->decrypt($incoming->bytes(0, $block_size)) :
+                $incoming->bytes(0, $block_size)
+            );
+            $incoming->bytes(0, $block_size, $b->bytes);
+        }
         my $plen = $ssh->{session}{_last_packet_length} = $b->get_int32;
         if ($plen < 1 + 4 || $plen > 256 * 1024) {
             $ssh->fatal_disconnect("Bad packet length $plen");
         }
     }
-    my $need = 4 + $ssh->{session}{_last_packet_length} - $block_size;
+    my $need = $aadlen ? $ssh->{session}{_last_packet_length} :
+        4 + $ssh->{session}{_last_packet_length} - $block_size;
     croak "padding error: need $need block $block_size"
         if $need % $block_size;
-    return if $incoming->length < $need + $block_size + $maclen;
+    return if $incoming->length < $aadlen + $need + $authlen + $maclen;
 
     my $buffer = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
-    $buffer->append( $incoming->bytes(0, $block_size, '') );
-    my $p_str = $incoming->bytes(0, $need, '');
-    $buffer->append( $ciph && $ciph->enabled ?
-        $ciph->decrypt($p_str) : $p_str );
-    my($macbuf);
+    my ($macbuf,$p_str);
+    if ($mac && $mac->enabled && $mac->etm) {
+        $p_str = $incoming->bytes(0, $aadlen + $need, '');
+        $macbuf = $mac->hmac(pack("N", $ssh->{session}{seqnr_in}) . $p_str);
+        substr($p_str,0,$aadlen,'');
+    } else {
+        # not etm mac, append bytes already decrypted above
+        $buffer->append( $incoming->bytes(0, $block_size, '') ); # append bytes decrypted above
+        $p_str = $incoming->bytes(0, $need, '');
+    }
+
     if ($mac && $mac->enabled) {
-        $macbuf = $mac->hmac(pack("N", $ssh->{session}{seqnr_in}) . $buffer->bytes);
+        unless ($mac->etm) {
+            $buffer->append( $ciph && $ciph->enabled ?
+                $ciph->decrypt($p_str) : $p_str );
+            $macbuf = $mac->hmac(pack("N", $ssh->{session}{seqnr_in}) . $buffer->bytes);
+        }
         my $stored_mac = $incoming->bytes(0, $maclen, '');
         $ssh->fatal_disconnect("Corrupted MAC on input")
             unless $macbuf eq $stored_mac;
+        # with etm macs, do not decrypt until after mac verified
+        $buffer->append( $ciph && $ciph->enabled ?
+            $ciph->decrypt($p_str) : $p_str ) if $mac->etm;
+    } else {
+        $buffer->append( $ciph && $ciph->enabled ?
+            $ciph->decrypt($p_str) : $p_str );
     }
+
     $ssh->{session}{seqnr_in}++;
 
-    my $padlen = unpack "c", $buffer->bytes(4, 1);
+    my $padlen = unpack "c", $buffer->bytes(4-$aadlen, 1);
     $ssh->fatal_disconnect("Corrupted padlen $padlen on input")
         unless $padlen >= 4;
 
-    ## Cut off packet size + padlen, discard padding */
-    $buffer->bytes(0, 5, '');
+    # Cut off packet size + padlen, discard padding
+    $buffer->bytes(0, 5-$aadlen, '');
     $buffer->bytes(-$padlen, $padlen, '');
 
     if ($comp && $comp->enabled) {
@@ -290,35 +317,43 @@ sub send_ssh2 {
     my $ssh = $pack->{ssh};
 
     my $kex = $ssh->kex;
-    my($ciph, $mac, $comp);
+    my($ciph, $mac, $comp, $authlen);
     if ($kex) {
         $ciph = $kex->send_cipher;
         $mac  = $kex->send_mac;
         $comp = $kex->send_comp;
+        undef $mac if $authlen = $ciph && $ciph->authlen;
     }
-    my $block_size = $ciph ? $ciph->blocksize : 8;
+    my $block_size = $ciph && $ciph->enabled ? $ciph->blocksize : 8;
 
     if ($comp && $comp->enabled) {
         my $compressed = $comp->compress($buffer->bytes);
         $buffer->empty;
         $buffer->append($compressed);
     }
+    my $aadlen = ($mac && $mac->enabled && $mac->etm) || $authlen ? 4 : 0;
 
     my $len = $buffer->length + 4 + 1;
-    my $padlen = $block_size - ($len % $block_size);
+    my $padlen = $block_size - (($len - $aadlen) % $block_size);
     $padlen += $block_size if $padlen < 4;
-    my $junk = $ciph ? (join '', map chr rand 255, 1..$padlen) : ("\0" x $padlen);
+    my $junk = $ciph ? BSD::arc4random::arc4random_bytes($padlen) : ("\0" x $padlen);
     $buffer->append($junk);
 
     my $packet_len = $buffer->length + 1;
-    $buffer->bytes(0, 0, pack("N", $packet_len) . pack("c", $padlen));
+    $buffer->bytes(0, 0, pack("c", $padlen));
+    $buffer->bytes(0, 0, pack("N", $packet_len)) unless $mac && $mac->etm;
+
+    my $out = $ciph && $ciph->enabled ? $ciph->encrypt($buffer->bytes) : $buffer->bytes;
+    substr($out,0,0,pack("N", $packet_len)) if $mac && $mac->etm;
 
     my($macbuf);
     if ($mac && $mac->enabled) {
-        $macbuf = $mac->hmac(pack("N", $ssh->{session}{seqnr_out}) . $buffer->bytes);
+        my $data = $mac->etm ? $out : $buffer->bytes;
+        $macbuf = $mac->hmac(pack("N", $ssh->{session}{seqnr_out}) . $data);
     }
+ 
     my $output = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
-    $output->append( $ciph && $ciph->enabled ? $ciph->encrypt($buffer->bytes) : $buffer->bytes );
+    $output->append($out);
     $output->append($macbuf) if $mac && $mac->enabled;
 
     $ssh->{session}{seqnr_out}++;

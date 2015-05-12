@@ -11,6 +11,10 @@ use vars qw( %MAC %MAC_REVERSE %SUPPORTED );
     'hmac-md5'  => 'MD5',
     'hmac-sha2-256'  => 'SHA2_256',
     'hmac-sha2-512'  => 'SHA2_512',
+    'hmac-sha2-256-etm@openssh.com'
+                     => 'SHA2_256',
+    'hmac-sha2-512-etm@openssh.com'
+                     => 'SHA2_512',
 );
 
 sub new {
@@ -19,6 +23,7 @@ sub new {
     my $mac_class = join '::', __PACKAGE__, $MAC{$type};
     my $mac = bless {}, $mac_class;
     $mac->init(@_) if @_;
+    $mac->{etm} = $type =~ /-etm\@openssh.com$/;
     $mac;
 }
 
@@ -37,6 +42,7 @@ sub key_len {
     $mac->{key_len} = shift if @_;
     $mac->{key_len};
 }
+sub etm { shift->{etm} }
 
 package Net::SSH::Perl::Mac::MD5;
 use strict;

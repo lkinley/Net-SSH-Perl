@@ -64,6 +64,7 @@ sub new_from_key_str {
 
 sub enabled { $_[0]->{enabled} }
 sub enable { $_[0]->{enabled} = 1 }
+sub authlen { 0 }
 
 sub id {
     my $this = shift;
