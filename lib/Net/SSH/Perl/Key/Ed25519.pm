@@ -67,7 +67,7 @@ sub read_private {
         if !grep("$ciphername",$class->supported_cipers);
 
     my $kdfname = $b->get_str;
-    my $kdf = $b->get_str;
+    my $kdfoptions = $b->get_str;
     my $nkeys = $b->get_int32;
     my $pub_key = $b->get_str;
     my $encrypted = $b->get_str;
@@ -91,6 +91,7 @@ sub read_private {
         croak 'Encrypted private keys not supported (yet)';
 
         # XXX TODO
+        use Net::SSH::Perl::Cipher;
         my $cipher = Net::SSH::Perl::Cipher->new($ciphername);
         croak "Cannot load cipher" unless $cipher;
 
@@ -98,16 +99,18 @@ sub read_private {
             if length($encrypted) < $cipher->blocksize || length($encrypted) % $cipher->blocksize;
 
         if ($kdfname eq 'bcrypt') {
+            $b->empty;
+            $b->append($kdfoptions);
             my $salt = $b->get_str;
             my $rounds = $b->get_int32;
         }
     }
 
-    $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+    $b->empty;
     $b->append($decrypted);
     my $check1 = $b->get_int32;
     my $check2 = $b->get_int32;
-    croak 'Wrong passphrase (check)' if $check1 != $check2;
+    croak 'Wrong passphrase (check)' if $check1 != $check2 || !$check1;
     my $type = $b->get_str;
     croak 'Wrong key type' unless $type eq $class->ssh_name;
     $pub_key = $b->get_str;

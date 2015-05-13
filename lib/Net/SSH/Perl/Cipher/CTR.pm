@@ -5,7 +5,7 @@ sub new {
     my($class, $ciph, $iv) = @_;
     bless {
         cipher => $ciph,
-        iv => substr($iv,0,$ciph->blocksize),
+        iv => substr($iv,0,$ciph->blocksize) || "\0" x $ciph->blocksize,
     }, $class;
 }
 

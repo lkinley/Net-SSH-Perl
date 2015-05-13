@@ -20,28 +20,21 @@ sub blocksize { 16 } # 128 bits as required by AES
 
 sub init {
     my $ciph = shift;
-    my($key, $iv, $is_ssh2) = @_;
-    $ciph->{is_ssh2} = defined $is_ssh2 ? $is_ssh2 : 0;
+    my($key, $iv) = @_;
 
     $key = substr($key,0,$ciph->keysize);
-    if ($is_ssh2) {
-        my $aes = Crypt::OpenSSL::AES->new($key);
-	$ciph->{ctr} = Net::SSH::Perl::Cipher::CTR->new($aes, $iv);
-    }
+    my $aes = Crypt::OpenSSL::AES->new($key);
+    $ciph->{ctr} = Net::SSH::Perl::Cipher::CTR->new($aes, $iv);
 }
 
 sub encrypt {
     my($ciph, $text) = @_;
-    if ($ciph->{is_ssh2}) {
-        return $ciph->{ctr}->encrypt($text);
-    }
+    return $ciph->{ctr}->encrypt($text);
 }
 
 sub decrypt {
     my($ciph, $text) = @_;
-    if ($ciph->{is_ssh2}) {
-        return $ciph->{ctr}->decrypt($text);
-    }
+    return $ciph->{ctr}->decrypt($text);
 }
 
 1;
