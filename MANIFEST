@@ -26,6 +26,7 @@ lib/Net/SSH/Perl/Cipher/AES128_CTR.pm
 lib/Net/SSH/Perl/Cipher/AES192_CTR.pm
 lib/Net/SSH/Perl/Cipher/AES256_CTR.pm
 lib/Net/SSH/Perl/Cipher/AES_CTR.pm
+lib/Net/SSH/Perl/Cipher/ChachaPoly.pm
 lib/Net/SSH/Perl/Cipher/CTR.pm
 lib/Net/SSH/Perl/Cipher/Blowfish.pm
 lib/Net/SSH/Perl/Cipher/CBC.pm

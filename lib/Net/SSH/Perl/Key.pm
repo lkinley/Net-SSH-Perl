@@ -135,8 +135,7 @@ the DSA implementation uses I<Crypt::DSA>.
 
 Creates a new object of type I<Net::SSH::Perl::Key::$key_type>,
 after loading the class implementing I<$key_type>. I<$key_type>
-should be either C<DSA> or C<RSA1>, currently; these are the
-only supported key implementations at the moment.
+should be C<DSA>, C<RSA1>, or C<Ed25519>.  
 
 I<$blob>, if present, should be a string representation of the key,
 from which the key object can be initialized. In fact, it should

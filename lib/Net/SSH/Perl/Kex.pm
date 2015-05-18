@@ -166,7 +166,7 @@ sub derive_keys {
         my $ctos = $mode == 1;
         $kex->{ciph}[$mode]->init($keys[$ctos ? 2 : 3], $keys[$ctos ? 0 : 1],
             $is_ssh2);
-        $kex->{mac}[$mode]->init($keys[$ctos ? 4 : 5]);
+        $kex->{mac}[$mode]->init($keys[$ctos ? 4 : 5]) if $kex->{mac}[$mode];
         $kex->{comp}[$mode]->init(6) if $kex->{comp}[$mode];
     }
 }
@@ -180,7 +180,11 @@ sub choose_conf {
         my $nmac  = $ctos ? PROPOSAL_MAC_ALGS_CTOS  : PROPOSAL_MAC_ALGS_STOC;
         my $ncomp = $ctos ? PROPOSAL_COMP_ALGS_CTOS : PROPOSAL_COMP_ALGS_STOC;
         $kex->choose_ciph($mode, $cprop->[$nciph], $sprop->[$nciph]);
-        $kex->choose_mac ($mode, $cprop->[$nmac],  $sprop->[$nmac]);
+        if ($kex->{ciph}[$mode]->authlen) {
+            $kex->{mac_name}[$mode] = '<implicit>';
+        } else {
+            $kex->choose_mac ($mode, $cprop->[$nmac],  $sprop->[$nmac])
+        }
         $kex->choose_comp($mode, $cprop->[$ncomp], $sprop->[$ncomp]);
     }
     $kex->choose_kex($cprop->[PROPOSAL_KEX_ALGS], $sprop->[PROPOSAL_KEX_ALGS]);
@@ -193,8 +197,10 @@ sub choose_conf {
             if $need < $kex->{ciph}[$mode]->keysize;
         $need = $kex->{ciph}[$mode]->blocksize
             if $need < $kex->{ciph}[$mode]->blocksize;
-        $need = $kex->{mac}[$mode]->len
-            if $need < $kex->{mac}[$mode]->len;
+        if ($kex->{mac}[$mode]) {
+            $need = $kex->{mac}[$mode]->len
+                if $need < $kex->{mac}[$mode]->len;
+        }
     }
     $kex->{we_need} = $need;
 }

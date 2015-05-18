@@ -150,7 +150,7 @@ sub dump_public { $_[0]->ssh_name . ' ' . encode_base64( $_[0]->as_blob, '' ) }
 sub sign {
     my $key = shift;
     my($data) = @_;
-    my $dgst = ${ $key->{datafellows} } & SSH_COMPAT_BUG_RSASIGMD5
+    my $dgst = $key->{datafellows} && ${ $key->{datafellows} } & SSH_COMPAT_BUG_RSASIGMD5
 		? 'MD5' : 'SHA1';
     my $rsa = Crypt::RSA::SS::PKCS1v15->new( Digest => $dgst );
     my $sig = $rsa->sign(
@@ -176,7 +176,7 @@ sub verify {
     croak "Can't verify type ", $ktype unless $ktype eq $key->ssh_name;
     my $sigblob = $b->get_str;
 
-    my $dgst = ${ $key->{datafellows} } & SSH_COMPAT_BUG_RSASIGMD5 ?
+    my $dgst = $key->{datafellows} && ${ $key->{datafellows} } & SSH_COMPAT_BUG_RSASIGMD5 ?
         'MD5' : 'SHA1';
 
     my $rsa = Crypt::RSA::SS::PKCS1v15->new( Digest => $dgst );

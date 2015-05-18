@@ -94,7 +94,7 @@ sub sign {
     $sigblob .= mp2bin($sig->r, INTBLOB_LEN);
     $sigblob .= mp2bin($sig->s, INTBLOB_LEN);
 
-    if (${$key->{datafellows}} & SSH_COMPAT_BUG_SIGBLOB) {
+    if ($key->{datafellows} && ${$key->{datafellows}} & SSH_COMPAT_BUG_SIGBLOB) {
         return $sigblob;
     }
     else {
@@ -110,7 +110,7 @@ sub verify {
     my($signature, $data) = @_;
     my $sigblob;
 
-    if (${$key->{datafellows}} & SSH_COMPAT_BUG_SIGBLOB) {
+    if ($key->{datafellows} && ${$key->{datafellows}} & SSH_COMPAT_BUG_SIGBLOB) {
         $sigblob = $signature;
     }
     else {

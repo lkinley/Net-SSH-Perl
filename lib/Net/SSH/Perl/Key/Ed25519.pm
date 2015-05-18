@@ -24,7 +24,7 @@ sub ssh_name { 'ssh-ed25519' }
 
 sub init {
     my $key = shift;
-    my($blob, $datafellows) = @_;
+    my($blob) = @_;
 
     if ($blob) {
         my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );

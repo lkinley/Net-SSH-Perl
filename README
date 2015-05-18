@@ -30,6 +30,15 @@ Protocol 2
     * Convert::PEM (0.05 or greater)
     * IO::Socket
 
+The module Crypt::OpenSSH::ChachaPoly is required if
+you wish to use the chacha20-poly1305@openssh.com cipher.
+It can be acquired from Git Hub at:
+https://github.com/lkinley/Crypt-OpenSSH-ChachaPoly
+or using git:
+git clone https://github.com/lkinley/Crypt-OpenSSH-ChachaPoly.git
+If the module is not installed, Net::SSH::Perl will fall back on
+other ciphers.
+
 It also optionally requires Digest::BubbleBabble for
 generating bubble babble fingerprints, and Crypt::RSA
 (1.37 or greater) if you want to use RSA key files in SSH2.

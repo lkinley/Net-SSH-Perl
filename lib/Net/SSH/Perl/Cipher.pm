@@ -17,6 +17,7 @@ BEGIN {
         AES128_CTR => 7,
         AES192_CTR => 8,
         AES256_CTR => 8,
+        ChachaPoly => 9,
     );
     %CIPHERS_SSH2 = (
         '3des-cbc' => 'DES3',
@@ -25,6 +26,7 @@ BEGIN {
         'aes128-ctr' => 'AES128_CTR',
         'aes192-ctr' => 'AES192_CTR',
         'aes256-ctr' => 'AES256_CTR',
+        'chacha20-poly1305@openssh.com' => 'ChachaPoly',
     );
     %CIPH_REVERSE = reverse %CIPHERS;
 }

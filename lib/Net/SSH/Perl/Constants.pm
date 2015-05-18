@@ -126,7 +126,9 @@ use vars qw( %CONSTANTS );
     'KEX_CURVE25519_SHA256' => 'curve25519-sha256@libssh.org',
     'KEX_DEFAULT_KEX' => 'curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1',
     'KEX_DEFAULT_PK_ALG' => 'ssh-ed25519,ssh-rsa,ssh-dss',
-    'KEX_DEFAULT_ENCRYPT' => 'aes256-ctr,aes192-ctr,aes128-ctr,3des-cbc,blowfish-cbc,arcfour',
+    'KEX_DEFAULT_ENCRYPT' => eval { require Crypt::OpenSSH::ChachaPoly } ?
+        'chacha20-poly1305@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr,3des-cbc,blowfish-cbc,arcfour' :
+        'aes256-ctr,aes192-ctr,aes128-ctr,3des-cbc,blowfish-cbc,arcfour',
     'KEX_DEFAULT_MAC' => 'hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,hmac-sha1,hmac-md5',
     'KEX_DEFAULT_COMP' => 'none,zlib',
     'KEX_DEFAULT_LANG' => '',

@@ -1,8 +1,10 @@
 Revision history for Net::SSH::Perl
 
-2.00 2015.05.11
+2.00 2015.05.18
 
-    - Add AES Cipher support in CTR mode for better security
+    - Add Chacha20-Poly1305 cipher support for best security
+      (Requires Crypt::OpenSSH::ChachaPoly, see README)
+    - Add AES Cipher support in CTR mode
     - Add Group 14 Diffie-Hellman Key Exchange
     - Add Group Exchange (RFC4523) Diffie-Hellman Key Exchange
     - Add Curve25519 (curve25519-sha256@libssh.org) Key Exchange support
@@ -12,7 +14,7 @@ Revision history for Net::SSH::Perl
       Encrypt-then-MAC (ETM) MAC support
     - Use BSD::arc4random for encrypted packet padding
     - Add support for Ed25519 ssh/host keys (Requires Crypt::Ed25519)
-    - Default ciphers order is now aes,3des,blowfish,arcfour
+    - Default ciphers order is now chacha,aes,3des,blowfish,arcfour
     - Default KEX order is now Curve25519, DHGEXSHA256, DH14, DH1
     - Default MAC order is now hmac-sha2-512-etm@openssh.com,
       hmac-sha2-256-etm@openssh.com, sha2-512, sha2-256, sha1, md5
