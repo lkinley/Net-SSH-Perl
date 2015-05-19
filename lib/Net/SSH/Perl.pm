@@ -300,7 +300,7 @@ sub _exchange_identification {
     my $remote_id = $ssh->_read_version;
     ($ssh->{server_version_string} = $remote_id) =~ s/\cM?\n$//;
     my($remote_major, $remote_minor, $remote_version) = $remote_id =~
-        /^SSH-(\d+)\.(\d+)-([^\n]+)[\r]*\n$/;
+        /^SSH-(\d+)\.(\d+)-([^\n\r]+)[\r]*\n$/;
     $ssh->debug("Remote protocol version $remote_major.$remote_minor, remote software version $remote_version");
 
     my $proto = $ssh->config->get('protocol');
