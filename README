@@ -115,3 +115,17 @@ that the actual tools support; obviously, only those options
 supported by Net::SSH::Perl are supported by the two scripts.
 
 David Robins / dbrobins@cpan.org
+
+Support for the following features by:
+Lance Kinley / lkinley@loyaltymethods.com
+
+Diffie-Hellman Group 14 Key Exchange
+Diffie-Hellman Group Exchange
+Curve25519 Key Exchange (curve25519-sha256@libssh.org)
+AES Cipher support (aes256-ctr,aes192-ctr,aes128-ctr)
+Chacha20-Poly1305 cipher support (chacha20-poly1305@openssh.com)
+hmac-sha2-256,hmac-sha2-512 MAC support
+hmac-sha2-256-etm@openssh.com, hmac-sha2-512-etm@openssh.com
+  Encrypt-then-MAC (ETM) MAC support
+Ed25519 key support, including encrypted keys that are enciphered
+  with supported crypto algorithms
