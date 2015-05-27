@@ -12,12 +12,12 @@ use Net::SSH::Perl::Cipher::CBC;
 use vars qw( $BF_CLASS );
 BEGIN {
     my @err;
-    for my $mod (qw( Crypt::Blowfish Crypt::Blowfish_PP )) {
+    for my $mod (qw( Crypt::OpenBSD::Blowfish Crypt::Blowfish Crypt::Blowfish_PP )) {
         eval "use $mod;";
         $BF_CLASS = $mod, last unless $@;
         push @err, $@;
     }
-    die "Failed to load Crypt::Blowfish and Crypt::Blowfish_PP: @err"
+    die "Failed to load Crypt::OpenBSD::Blowfish, Crypt::Blowfish, or Crypt::Blowfish_PP: @err"
         unless $BF_CLASS;
 }
 
