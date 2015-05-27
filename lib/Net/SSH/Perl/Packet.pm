@@ -232,7 +232,7 @@ sub read_poll_ssh2 {
             $ciph->decrypt($p_str) : $p_str ) if $mac->etm;
     } else {
         $buffer->append( $ciph && $ciph->enabled ?
-            $ciph->decrypt($p_str,$seqnr) : $p_str );
+            $ciph->decrypt($p_str,$seqnr,$aadlen) : $p_str );
     }
 
     $ssh->{session}{seqnr_in}++;
@@ -358,7 +358,7 @@ sub send_ssh2 {
     $buffer->bytes(0, 0, pack("c", $padlen));
     $buffer->bytes(0, 0, pack("N", $packet_len)) unless $mac && $mac->etm;
 
-    my $out = $ciph && $ciph->enabled ? $ciph->encrypt($buffer->bytes,$seqnr) : $buffer->bytes;
+    my $out = $ciph && $ciph->enabled ? $ciph->encrypt($buffer->bytes,$seqnr,$aadlen) : $buffer->bytes;
     substr($out,0,0,pack("N", $packet_len)) if $mac && $mac->etm;
 
     my($macbuf);

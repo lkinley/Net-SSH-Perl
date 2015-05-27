@@ -125,9 +125,10 @@ Net::SSH::Perl::Key - Public or private key abstraction
 =head1 DESCRIPTION
 
 I<Net::SSH::Perl::Key> implements an abstract base class interface
-to key objects (either DSA or RSA keys, currently). The underlying
-implementation for RSA is an internal, hash-reference implementation;
-the DSA implementation uses I<Crypt::DSA>.
+to key objects (either DSA, RSA, or Ed25519 keys, currently). The
+underlying implementation for RSA is an internal, hash-reference
+implementation.  The DSA implementation uses I<Crypt::DSA>, and
+the Ed25519 implementation uses I<Crypt::Ed25519>.
 
 =head1 USAGE
 
@@ -165,19 +166,27 @@ passphrase, this might be a good time to ask the user for the
 actual passphrase. :)
 
 Returns the new key object, which is blessed into the subclass
-denoted by I<$key_type> (either C<DSA> or C<RSA1>).
+denoted by I<$key_type> (either C<DSA>, C<RSA1> or C<Ed25519>).
 
 =head2 Net::SSH::Perl::Key->keygen($key_type, $bits)
 
-Generates a new key and returns that key. The key returned is
-the private key, which (presumably) contains all of the public
-key data, as well. I<$bits> is the number of bits in the key.
+$key_type is either RSA or DSA.  Generates a new DSA or RSA key 
+and returns that key. The key returned is the private key, which
+(presumably) contains all of the public key data, as well. I<$bits>
+ is the number of bits in the key.
 
 Your I<$key_type> implementation may not support key generation;
 if not, calling this method is a fatal error.
 
 Returns the new key object, which is blessed into the subclass
 denoted by I<$key_type> (either C<DSA> or C<RSA1>).
+
+=head2 Net::SSH::Perl::Key->keygen('Ed25519' [,$comment])
+
+Generates a new Ed25519 key with an optional comment.
+
+Returns the new key object, which is bless into the Ed25519
+subclass.
 
 =head2 Net::SSH::Perl::Key->extract_public($key_type, $key_string)
 
@@ -190,12 +199,15 @@ identity files.
 Returns the new key object, which is blessed into the subclass
 denoted by I<$key_type> (either C<DSA> or C<RSA1>).
 
-=head2 $key->write_private([ $file [, $pass] ])
+=head2 $key->write_private([ $file [, $pass, $ciphername, $rounds] ])
 
 Writes out the private key I<$key> to I<$file>, and encrypts
 it using the passphrase I<$pass>. If I<$pass> is not provided,
 the key is unencrypted, and the only security protection is
-through filesystem protections.
+through filesystem protections.  For Ed25519 keys, optional
+parameters ciphername and rounds can be passed to specify the
+desired cipher to encrypt the key with and how many rounds of
+encryption to employ, respectively.
 
 If I<$file> is not provided, returns the content that would
 have been written to the key file.

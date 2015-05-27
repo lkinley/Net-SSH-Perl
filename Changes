@@ -1,6 +1,6 @@
 Revision history for Net::SSH::Perl
 
-2.00 2015.05.18
+2.00 2015.05.26
 
     - Add Chacha20-Poly1305 cipher support for best security
       (Requires Crypt::OpenSSH::ChachaPoly, see README)
@@ -14,6 +14,8 @@ Revision history for Net::SSH::Perl
       Encrypt-then-MAC (ETM) MAC support
     - Use BSD::arc4random for encrypted packet padding
     - Add support for Ed25519 ssh/host keys (Requires Crypt::Ed25519)
+      Encrypted Ed25519 key support requires Crypt::OpenBSD::Blowfish
+      (See README for info)
     - Default ciphers order is now chacha,aes,3des,blowfish,arcfour
     - Default KEX order is now Curve25519, DHGEXSHA256, DH14, DH1
     - Default MAC order is now hmac-sha2-512-etm@openssh.com,

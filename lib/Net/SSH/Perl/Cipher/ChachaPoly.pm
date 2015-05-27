@@ -22,6 +22,7 @@ sub new {
 sub keysize { 64 } 
 sub blocksize { 8 }
 sub authlen { 16 }
+sub ivlen { 0 }
 
 sub init {
     my $ciph = shift;
@@ -41,7 +42,8 @@ sub _seqnr_bytes {
 }
 
 sub encrypt {
-    my($ciph, $data, $seqnr) = @_;
+    my($ciph, $data, $seqnr, $aadlen) = @_;
+    $aadlen ||= 0;
 
     # run chacha20 once to generate poly1305 key
     # the iv is the packet sequence number
@@ -50,19 +52,22 @@ sub encrypt {
     my $poly_key = "\0" x POLY1305_KEYLEN;
     $poly_key = $ciph->{main}->encrypt($poly_key);
 
-    # encrypt packet length from first four bytes of data
-    $ciph->{header}->ivsetup($seqnr,undef);
-    my $aadenc = $ciph->{header}->encrypt(substr($data,0,AADLEN));
+    my $aadenc;
+    if ($aadlen) {
+        # encrypt packet length from first four bytes of data
+        $ciph->{header}->ivsetup($seqnr,undef);
+        $aadenc = $ciph->{header}->encrypt(substr($data,0,$aadlen));
+    }
     
     # set chacha's block counter to 1
     $ciph->{main}->ivsetup($seqnr,ONE);
-    my $enc = $aadenc . $ciph->{main}->encrypt(substr($data,AADLEN));
+    my $enc = $aadenc . $ciph->{main}->encrypt(substr($data,$aadlen));
     $enc .= $ciph->{main}->poly1305($enc,$poly_key);
     return $enc;
 }
 
 sub decrypt {
-    my($ciph, $data, $seqnr) = @_;
+    my($ciph, $data, $seqnr, $aadlen) = @_;
 
     # run chacha20 once to generate poly1305 key
     # the iv is the packet sequence number
@@ -71,23 +76,27 @@ sub decrypt {
     my $poly_key = "\0" x POLY1305_KEYLEN;
     $poly_key = $ciph->{main}->encrypt($poly_key);
 
-    my $datalen = unpack('N', $ciph->{length} ||
-        eval {
-            $ciph->{header}->ivsetup($seqnr,undef);
-            $ciph->{header}->decrypt(substr($data,0,AADLEN))
-        });
+    my $datalen = length($data) - $ciph->authlen;
+    if ($aadlen) {
+        $datalen = unpack('N', $ciph->{length} ||
+            eval {
+                $ciph->{header}->ivsetup($seqnr,undef);
+                $ciph->{header}->decrypt(substr($data,0,$aadlen))
+            });
+    }
     delete $ciph->{length};
 
     # check tag before decrypting packet
-    my $expected_tag = $ciph->{main}->poly1305(substr($data,0,AADLEN+$datalen),
+    my $expected_tag = $ciph->{main}->poly1305(substr($data,0,$aadlen+$datalen),
                                                $poly_key);
+    my $tag = substr($data,$aadlen+$datalen,$ciph->authlen);
     croak "Invalid poly1305 tag"
-        if $expected_tag ne substr($data,AADLEN+$datalen,$ciph->authlen);
+        if $expected_tag ne $tag;
 
     # set chacha's block counter to 1
     $ciph->{main}->ivsetup($seqnr,ONE);
     # return payload only
-    $ciph->{main}->decrypt(substr($data,AADLEN,$datalen));
+    $ciph->{main}->decrypt(substr($data,$aadlen,$datalen));
 }
 
 sub get_length {

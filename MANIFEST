@@ -22,9 +22,13 @@ lib/Net/SSH/Perl/Buffer.pm
 lib/Net/SSH/Perl/Channel.pm
 lib/Net/SSH/Perl/ChannelMgr.pm
 lib/Net/SSH/Perl/Cipher.pm
+lib/Net/SSH/Perl/Cipher/AES128_CBC.pm
 lib/Net/SSH/Perl/Cipher/AES128_CTR.pm
+lib/Net/SSH/Perl/Cipher/AES192_CBC.pm
 lib/Net/SSH/Perl/Cipher/AES192_CTR.pm
+lib/Net/SSH/Perl/Cipher/AES256_CBC.pm
 lib/Net/SSH/Perl/Cipher/AES256_CTR.pm
+lib/Net/SSH/Perl/Cipher/AES_CBC.pm
 lib/Net/SSH/Perl/Cipher/AES_CTR.pm
 lib/Net/SSH/Perl/Cipher/ChachaPoly.pm
 lib/Net/SSH/Perl/Cipher/CTR.pm

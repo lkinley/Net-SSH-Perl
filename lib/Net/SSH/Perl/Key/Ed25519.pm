@@ -17,8 +17,10 @@ use constant MARK_END   => "-----END OPENSSH PRIVATE KEY-----\n";
 use constant AUTH_MAGIC => "openssh-key-v1\0";
 use constant ED25519_SK_SZ => 64;
 use constant ED25519_PK_SZ => 32;
-
-sub supported_cipers { qw(aes128-ctr aes192-ctr aes256-ctr aes256-cbc 3des-cbc blowfish arcfour) }
+use constant SALT_LEN => 16;
+use constant DEFAULT_ROUNDS => 16;
+use constant DEFAULT_CIPHERNAME => 'aes256-cbc';
+use constant KDFNAME => 'bcrypt';
 
 sub ssh_name { 'ssh-ed25519' }
 
@@ -52,7 +54,8 @@ sub read_private {
     open FH, $key_file or return;
     my $content = do { local $/; <FH> };
     close FH;
-    my $blob = decode_base64(substr($content,length(MARK_BEGIN),length($content)-length(MARK_END)-length(MARK_BEGIN)));
+    my $blob = decode_base64(substr($content,length(MARK_BEGIN),
+        length($content)-length(MARK_END)-length(MARK_BEGIN)));
     my $str = AUTH_MAGIC;
     croak "Invalid key format" unless $blob =~ /^${str}/;
 
@@ -60,12 +63,7 @@ sub read_private {
     $b->append($blob);
     $b->consume(length(AUTH_MAGIC));
 
-    #$class->_print($b->bytes);
-
     my $ciphername = $b->get_str;
-    croak "Key encrypted with unsupported cipher '$ciphername'"
-        if !grep("$ciphername",$class->supported_cipers);
-
     my $kdfname = $b->get_str;
     my $kdfoptions = $b->get_str;
     my $nkeys = $b->get_int32;
@@ -76,7 +74,7 @@ sub read_private {
         if !$passphrase && $ciphername ne 'none';
 
     croak 'Unknown cipher'
-        if $kdfname ne 'none' && $kdfname ne 'bcrypt';
+        if $kdfname ne 'none' && $kdfname ne KDFNAME;
 
     croak 'Invalid format'
         if $kdfname ne 'none' && $ciphername eq 'none';
@@ -88,21 +86,33 @@ sub read_private {
     if ($ciphername eq 'none') {
         $decrypted = $encrypted;
     } else {
-        croak 'Encrypted private keys not supported (yet)';
+        if ($kdfname eq KDFNAME) {
+            use Net::SSH::Perl::Cipher;
+            my $cipher = eval { Net::SSH::Perl::Cipher->new($ciphername) };
+            croak "Cannot load cipher $ciphername" unless $cipher;
+            croak 'Invalid format'
+                if length($encrypted) < $cipher->blocksize ||
+                   length($encrypted) % $cipher->blocksize;
 
-        # XXX TODO
-        use Net::SSH::Perl::Cipher;
-        my $cipher = Net::SSH::Perl::Cipher->new($ciphername);
-        croak "Cannot load cipher" unless $cipher;
+            my $keylen = $cipher->keysize;
+            my $ivlen = $cipher->ivlen;
+            my $authlen = $cipher->authlen;
+            my $tag = $b->bytes($b->offset,$authlen);
+            croak 'Invalid format'
+                if length($tag) != $authlen;
 
-        croak 'Invalid format'
-            if length($encrypted) < $cipher->blocksize || length($encrypted) % $cipher->blocksize;
-
-        if ($kdfname eq 'bcrypt') {
             $b->empty;
             $b->append($kdfoptions);
             my $salt = $b->get_str;
+            croak "Invalid format"
+                if length($salt) != SALT_LEN;
             my $rounds = $b->get_int32;
+
+            my $km = bcrypt_pbkdf($passphrase, $salt, $keylen+$ivlen, $rounds);
+            my $key = substr($km,0,$keylen);
+            my $iv = substr($km,$keylen,$ivlen);
+            $cipher->init($key,$iv);
+            $decrypted = $cipher->decrypt($encrypted . $tag);
         }
     }
 
@@ -110,15 +120,25 @@ sub read_private {
     $b->append($decrypted);
     my $check1 = $b->get_int32;
     my $check2 = $b->get_int32;
-    croak 'Wrong passphrase (check)' if $check1 != $check2 || !$check1;
+    croak 'Wrong passphrase (check mismatch)'
+        if $check1 != $check2 || ! defined $check1;
+
     my $type = $b->get_str;
-    croak 'Wrong key type' unless $type eq $class->ssh_name;
+    croak 'Wrong key type'
+        unless $type eq $class->ssh_name;
     $pub_key = $b->get_str;
     my $priv_key = $b->get_str;
+    croak 'Invalid format'
+        if length($pub_key) != ED25519_PK_SZ ||
+           length($priv_key) != ED25519_SK_SZ;
     my $comment = $b->get_str;
 
-    croak 'Invalid format'
-        if length($pub_key) != ED25519_PK_SZ || length($priv_key) != ED25519_SK_SZ;
+    # check padding
+    my $padnum = 0;
+    while ($b->offset < $b->length) {
+        croak "Invalid format"
+            if ord($b->get_char) != ++$padnum;
+    }
 
     my $key = $class->new(undef);
     $key->{comment} = $comment;
@@ -129,31 +149,54 @@ sub read_private {
 
 sub write_private {
     my $key = shift;
-    my($key_file, $passphrase) = @_;
+    my($key_file, $passphrase, $ciphername, $rounds) = @_;
+    my ($kdfoptions, $kdfname, $blocksize, $cipher);
 
-    my $ciphername = 'none';
-    my $kdfname = 'none';
-    my $kdf;
-    my $blocksize;
     if ($passphrase) {
-        croak 'Encrypted key files not supported (yet)';
-        # XXX TODO
-        #$blocksize = $cipher->blocksize;
+        $ciphername ||= DEFAULT_CIPHERNAME;
+        use Net::SSH::Perl::Cipher;
+        $cipher = eval { Net::SSH::Perl::Cipher->new($ciphername) };
+        croak "Cannot load cipher $ciphername"
+            unless $cipher;
+
+        # cipher init params
+        $kdfname = KDFNAME;
+        $blocksize = $cipher->blocksize;
+        my $keylen = $cipher->keysize;
+        my $ivlen = $cipher->ivlen;
+        $rounds ||= DEFAULT_ROUNDS;
+        use BSD::arc4random;
+        my $salt = BSD::arc4random::arc4random_bytes(SALT_LEN);
+
+        my $kdf = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+        $kdf->put_str($salt);
+        $kdf->put_int32($rounds);
+        $kdfoptions = $kdf->bytes;
+
+        # get key material
+        my $km = bcrypt_pbkdf($passphrase, $salt, $keylen+$ivlen, $rounds);
+        my $key = substr($km,0,$keylen);
+        my $iv = substr($km,$keylen,$ivlen);
+        $cipher->init($key,$iv);
     } else {
+        $ciphername = 'none';
+        $kdfname = 'none';
         $blocksize = 8;
-    }
+}
     my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
     $b->put_char(AUTH_MAGIC);
     $b->put_str($ciphername);
     $b->put_str($kdfname);
-    $b->put_str($kdf);
+    $b->put_str($kdfoptions);
     $b->put_int32(1); # one key
 
+    # public key
     my $pub = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
     $pub->put_str($key->ssh_name);
     $pub->put_str($key->{pub});
     $b->put_str($pub->bytes);
 
+    # create private key blob
     my $kb = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
     my $checkint = int(rand(0xffffffff));
     $kb->put_int32($checkint);
@@ -165,7 +208,13 @@ sub write_private {
     if (my $r = length($kb->bytes) % $blocksize) {
          $kb->put_char(chr($_)) foreach (1..$blocksize-$r);
     }
-    $b->put_str($kb->bytes);
+    my $bytes = $cipher ? $cipher->encrypt($kb->bytes) : $kb->bytes;
+    my $tag;
+    if (my $authlen = $cipher->authlen) {
+        $tag = substr($bytes,-$authlen,$authlen,'');
+    }
+    $b->put_str($bytes);
+    $b->put_chars($tag);
 
     local *FH;
     open FH, ">$key_file" or die "Cannot write key file";
@@ -175,7 +224,8 @@ sub write_private {
     close FH;
 }
 
-sub dump_public { $_[0]->ssh_name . ' ' . encode_base64( $_[0]->as_blob, '') . ' ' . $_[0]->{comment} }
+sub dump_public { $_[0]->ssh_name . ' ' . encode_base64( $_[0]->as_blob, '') .
+                  ' ' . $_[0]->{comment} }
 
 sub sign {
     my $key = shift;
@@ -220,20 +270,69 @@ sub as_blob {
 
 sub fingerprint_raw { $_[0]->as_blob }
 
-sub _print {
-    my $key = shift;
-    my $bytes = shift;
-    for (my $i=0; $i<length($bytes); $i++) {
-	    my $char = substr($bytes,$i,1);
-	    if (ord($char) > 32 && ord($char) < 127) {
-		    print ' ',chr(ord($char)),' ';
-	    } else {
-		    print unpack('H*',$char),' ';
-	    }
-    }
-    print "\n";
+sub sha512 {
+    require Digest::SHA2;
+    my $sha2 = Digest::SHA2->new(512);
+    $sha2->add(shift);
+    $sha2->digest;
 }
 
+sub bcrypt_hash {
+    my ($sha2pass, $sha2salt) = @_;
+    my $ciphertext = 'OxychromaticBlowfishSwatDynamite';
+
+    require Crypt::OpenBSD::Blowfish;
+    my $bf = Crypt::OpenBSD::Blowfish->new();
+    $bf->expandstate($sha2salt,$sha2pass);
+    for (my $i=0; $i<64; $i++) {
+        $bf->expand0state($sha2salt);
+        $bf->expand0state($sha2pass);
+    }
+    # iterate 64 times
+    $bf->encrypt_iterate($ciphertext,64);
+}
+
+sub bcrypt_pbkdf {
+    my ($pass, $salt, $keylen, $rounds) = @_;
+    my $out;
+    use constant BCRYPT_HASHSIZE => 32;
+    my $key = "\0" x $keylen;
+    my $origkeylen = $keylen;
+
+    return if $rounds < 1;
+    return unless $pass && $salt;
+
+    my $stride = int(($keylen + BCRYPT_HASHSIZE - 1) / BCRYPT_HASHSIZE);
+    my $amt = int(($keylen + $stride - 1) / $stride);
+
+    my $sha2pass = sha512($pass);
+
+    for (my $count = 1; $keylen > 1; $count++) {
+        my $countsalt = pack('N',$count & 0xffffffff);
+        # first round, salt is salt
+        my $sha2salt = sha512($salt . $countsalt);
+
+        my $tmpout = $out = bcrypt_hash($sha2pass, $sha2salt);
+
+        for (my $i=1; $i < $rounds; $i++) {
+            # subsequent rounds, salt is previous output
+            $sha2salt = sha512($tmpout);
+            $tmpout = bcrypt_hash($sha2pass,$sha2salt);
+            $out ^= $tmpout;
+        }
+
+        # pbkdf2 deviation: output the key material non-linearly.
+        $amt = $amt<$keylen ? $amt : $keylen;
+        my $i;
+        for ($i=0; $i<$amt; $i++) {
+            my $dest = $i * $stride + ($count - 1);
+            last if $dest >= $origkeylen;
+            substr($key,$dest,1,substr($out,$i,1));
+        }
+        $keylen -= $i;
+    }
+    return $key;
+}
 
 1;
 __END__
