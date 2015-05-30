@@ -4,6 +4,7 @@ use strict;
 use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Constants qw( SSH_COMPAT_BUG_SIGBLOB );
 use Net::SSH::Perl::Util qw( :ssh2mp );
+use Digest::SHA qw( sha512 );
 
 use Net::SSH::Perl::Key;
 use base qw( Net::SSH::Perl::Key );
@@ -269,13 +270,6 @@ sub as_blob {
 }
 
 sub fingerprint_raw { $_[0]->as_blob }
-
-sub sha512 {
-    require Digest::SHA2;
-    my $sha2 = Digest::SHA2->new(512);
-    $sha2->add(shift);
-    $sha2->digest;
-}
 
 sub bcrypt_hash {
     my ($sha2pass, $sha2salt) = @_;

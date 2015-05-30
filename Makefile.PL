@@ -18,10 +18,8 @@ my %SSH_PREREQ = (
 
     2 => {
         'BSD::arc4random'   => '1.50',
-        'Digest::SHA1'      => '2.10',
-        'Digest::SHA2'      => '1.1.1',
+        'Digest::SHA'       => 0,
         'Digest::HMAC_MD5'  => 0,
-        'Digest::HMAC_SHA1' => 0,
         'Crypt::Curve25519' => '0.04',
         'Crypt::DSA'        => '0.11',
         'Crypt::DH'         => '0.01',

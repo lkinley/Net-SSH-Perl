@@ -210,23 +210,18 @@ sub choose_kex {
     my $name = _get_match(@_);
     croak "No kex algorithm" unless $name;
     $kex->{algorithm} = $name;
-    if ($name eq KEX_CURVE25519_SHA256) {
-        use Net::SSH::Perl::Kex::C25519;
-        $kex->{class_name} = __PACKAGE__ . "::C25519";
-    }
-    elsif ($name eq KEX_DH_GEX_SHA256) {
-        use Net::SSH::Perl::Kex::DHGEXSHA256;
-        $kex->{class_name} = __PACKAGE__ . "::DHGEXSHA256";
-    }
-    elsif ($name eq KEX_DH14) {
-        use Net::SSH::Perl::Kex::DH14;
-        $kex->{class_name} = __PACKAGE__ . "::DH14";
-    }
-    elsif ($name eq KEX_DH1) {
-        use Net::SSH::Perl::Kex::DH1;
-        $kex->{class_name} = __PACKAGE__ . "::DH1";
-    }
-    else {
+    my %kexmap = (
+        &KEX_CURVE25519_SHA256 => 'C25519',
+        &KEX_DH_GEX_SHA256     => 'DHGEXSHA256',
+        &KEX_DH_GEX_SHA1       => 'DHGEXSHA1',
+        &KEX_DH14              => 'DH14',
+        &KEX_DH1               => 'DH1'
+    );
+    if (my $pkg = $kexmap{$name}) {
+        $kex->{ssh}->debug("Using $name for key exchange");
+        eval "use Net::SSH::Perl::Kex::$pkg";
+        $kex->{class_name} = __PACKAGE__ . '::' . $pkg;
+    } else {
         croak "Bad kex algorithm $name";
     }
 }
@@ -307,8 +302,6 @@ using RC4.
 
 The algorithm negotiation phase, as described above, includes
 negotiation for the key-exchange algorithm to be used.
-Currently, the only supported algorithm is Diffie-Hellman
-Group 1 key exchange, implemented in I<Net::SSH::Perl::Kex::DH1>.
 After algorithm negotiation, the Kex object is reblessed into
 the key exchange class (eg. 'Net::SSH::Perl::Kex::DH1'), and
 then the subclass's I<exchange> method is called to perform
@@ -326,7 +319,7 @@ algorithms.
 Please see the Net::SSH::Perl manpage for author, copyright,
 and license information.
 
-Modifications for enabling new DH Key Exchange mechanisms by:
+New key exchange mechanisms added by:
 Lance Kinley E<lkinley@loyaltymethods.com>
 
 =cut

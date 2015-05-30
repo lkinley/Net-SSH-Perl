@@ -59,7 +59,7 @@ sub len { 16 }
 
 package Net::SSH::Perl::Mac::SHA1;
 use strict;
-use Digest::HMAC_SHA1 qw( hmac_sha1 );
+use Digest::SHA qw( hmac_sha1 );
 use vars qw( @ISA );
 @ISA = qw( Net::SSH::Perl::Mac );
 
@@ -72,43 +72,31 @@ sub len { 20 }
 
 package Net::SSH::Perl::Mac::SHA2_256;
 use strict;
+use Digest::SHA qw( hmac_sha256 );
 use vars qw( @ISA );
 @ISA = qw( Net::SSH::Perl::Mac );
 
 sub hmac {
     my $mac = shift;
     my $data = shift;
-    Digest::HMAC::hmac($data, $mac->{key}, \&Digest::SHA2::compat::sha2_256, 64)
+    hmac_sha256($data, $mac->{key});
 }
 
 sub len { 32 }
 
 package Net::SSH::Perl::Mac::SHA2_512;
 use strict;
+use Digest::SHA qw( hmac_sha512 );
 use vars qw( @ISA );
 @ISA = qw( Net::SSH::Perl::Mac );
 
 sub hmac {
     my $mac = shift;
     my $data = shift;
-    Digest::HMAC::hmac($data, $mac->{key}, \&Digest::SHA2::compat::sha2_512, 128)
+    hmac_sha512($data, $mac->{key});
 }
 
 sub len { 64 }
-
-package Digest::SHA2::compat;
-use strict;
-use Digest::SHA2;
-
-sub sha2 { _sha2(256,@_) }
-sub sha2_256 { _sha2(256,@_) }
-sub sha2_512 { _sha2(512,@_) }
-
-sub _sha2 {
-    my $sha2 = Digest::SHA2->new(shift);
-    $sha2->add(@_);
-    $sha2->digest;
-}
 
 1;
 __END__

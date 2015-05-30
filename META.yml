@@ -20,10 +20,8 @@ requires:
   Crypt::IDEA           : 0
   Crypt::OpenSSL::AES   : 0.03
   Digest::HMAC_MD5      : 0
-  Digest::HMAC_SHA1     : 0
   Digest::MD5           : 0
-  Digest::SHA1          : 2.10
-  Digest::SHA2          : 1.1.1
+  Digest::SHA           : 4.0.0
   IO::Socket            : 0
   Math::GMP             : 1.04
   Math::Pari            : 2.001804

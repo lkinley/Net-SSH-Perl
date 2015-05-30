@@ -51,6 +51,8 @@ lib/Net/SSH/Perl/Kex/C25519.pm
 lib/Net/SSH/Perl/Kex/DH.pm
 lib/Net/SSH/Perl/Kex/DH1.pm
 lib/Net/SSH/Perl/Kex/DH14.pm
+lib/Net/SSH/Perl/Kex/DHGEX.pm
+lib/Net/SSH/Perl/Kex/DHGEXSHA1.pm
 lib/Net/SSH/Perl/Kex/DHGEXSHA256.pm
 lib/Net/SSH/Perl/Key.pm
 lib/Net/SSH/Perl/Key/DSA.pm

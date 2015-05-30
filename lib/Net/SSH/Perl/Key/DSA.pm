@@ -15,7 +15,7 @@ use Crypt::DSA;
 use Crypt::DSA::Key;
 use Crypt::DSA::Signature;
 use Carp qw( croak );
-use Digest::SHA1 qw( sha1 );
+use Digest::SHA qw( sha1 );
 
 use constant INTBLOB_LEN => 20;
 

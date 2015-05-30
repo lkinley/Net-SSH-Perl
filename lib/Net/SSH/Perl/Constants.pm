@@ -123,8 +123,9 @@ use vars qw( %CONSTANTS );
     'KEX_DH1' => 'diffie-hellman-group1-sha1',
     'KEX_DH14' => 'diffie-hellman-group14-sha1',
     'KEX_DH_GEX_SHA256' => 'diffie-hellman-group-exchange-sha256',
+    'KEX_DH_GEX_SHA1' => 'diffie-hellman-group-exchange-sha1',
     'KEX_CURVE25519_SHA256' => 'curve25519-sha256@libssh.org',
-    'KEX_DEFAULT_KEX' => 'curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1',
+    'KEX_DEFAULT_KEX' => 'curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256,diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1,diffie-hellman-group1-sha1',
     'KEX_DEFAULT_PK_ALG' => 'ssh-ed25519,ssh-rsa,ssh-dss',
     'KEX_DEFAULT_ENCRYPT' => eval { require Crypt::OpenSSH::ChachaPoly } ?
         'chacha20-poly1305@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr,3des-cbc,blowfish-cbc,arcfour' :

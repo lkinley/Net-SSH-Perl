@@ -20,7 +20,7 @@ use Crypt::RSA::SS::PKCS1v15;
 use base qw( Net::SSH::Perl::Key );
 use Convert::PEM;
 use Carp qw( croak );
-use Digest::SHA1 qw( sha1 );
+use Digest::SHA qw( sha1 );
 
 use constant INTBLOB_LEN => 20;
 

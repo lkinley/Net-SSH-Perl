@@ -23,10 +23,8 @@ Protocol 2
     * Math::Pari (2.001804 or greater)
     * MIME::Base64
     * Digest::MD5
-    * Digest::SHA1
-    * Digest::SHA2 (1.1.1 or greater)
+    * Digest::SHA
     * Digest::HMAC_MD5
-    * Digest::HMAC_SHA1
     * Convert::PEM (0.05 or greater)
     * IO::Socket
 

@@ -10,7 +10,7 @@ use Net::SSH::Perl::Util qw( bitsize );
 use Carp qw( croak );
 use Crypt::DH;
 use Math::Pari;
-use Digest::SHA2;
+use Digest::SHA qw( sha256 );
 use Scalar::Util qw(weaken);
 use BSD::arc4random;
 use Crypt::Curve25519;
@@ -98,22 +98,16 @@ sub kex_hash {
     $b->put_str($s_pub_key);
     $b->put_bignum2_bytes($shared_secret);
 
-    my $sha2 = Digest::SHA2->new(256) or return;
-    $sha2->add($b->bytes);
-    $sha2->digest;
+    sha256($b->bytes);
 }
 
 sub derive_key {
     my($kex, $id, $need, $hash, $shared_secret, $session_id) = @_;
     my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
     $b->put_bignum2_bytes($shared_secret);
-    my $sha2 = Digest::SHA2->new(256) or return;
-    $sha2->add($b->bytes, $hash, chr($id), $session_id);
-    my $digest = $sha2->digest;
+    my $digest = sha256($b->bytes, $hash, chr($id), $session_id);
     for (my $have = 32; $need > $have; $have += 32) {
-        $sha2->reset;
-        $sha2->add($b->bytes, $hash, $digest);
-        $digest .= $sha2->digest;
+        $digest .= sha256($b->bytes, $hash, $digest);
     }
     $digest;
 }
