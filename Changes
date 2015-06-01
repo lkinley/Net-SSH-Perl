@@ -1,10 +1,11 @@
 Revision history for Net::SSH::Perl
 
-2.00 2015.05.26
+2.00 2015.05.29
 
     - Add Chacha20-Poly1305 cipher support for best security
       (Requires Crypt::OpenSSH::ChachaPoly, see README)
-    - Add AES Cipher support in CTR mode
+    - Add AES Cipher support in CTR mode (CBC mode supported in Ed25519
+      keys only)
     - Add Group 14 Diffie-Hellman Key Exchange
     - Add Group Exchange (RFC4523) Diffie-Hellman Key Exchange
     - Add Curve25519 (curve25519-sha256@libssh.org) Key Exchange support
@@ -17,7 +18,7 @@ Revision history for Net::SSH::Perl
       Encrypted Ed25519 key support requires Crypt::OpenBSD::Blowfish
       (See README for info)
     - Default ciphers order is now chacha,aes,3des,blowfish,arcfour
-    - Default KEX order is now Curve25519, DHGEXSHA256, DH14, DH1
+    - Default KEX order is now Curve25519, DHGEXSHA256, DHGEXSHA1, DH14, DH1
     - Default MAC order is now hmac-sha2-512-etm@openssh.com,
       hmac-sha2-256-etm@openssh.com, sha2-512, sha2-256, sha1, md5
     - SSH Keys can now be in DOS format (no need to remove CR/LF)
