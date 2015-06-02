@@ -117,6 +117,8 @@ WriteMakefile(
     AUTHOR       => 'David Robins <dbrobins@cpan.org>',
     ABSTRACT     => 'Perl client interface to SSH',
     NO_META      => 1,
+    DIR          => ['extlib/Crypt/OpenBSD/Blowfish',
+                     'extlib/Crypt/OpenSSH/ChachaPoly' ],
 );
 
 sub read_yes_or_no {

@@ -30,20 +30,22 @@ Protocol 2
 
 The module Crypt::OpenSSH::ChachaPoly is required if
 you wish to use the chacha20-poly1305@openssh.com cipher.
-It can be acquired from Git Hub at:
+(It is included in this distribution).
+It can also be acquired from Git Hub at:
 https://github.com/lkinley/Crypt-OpenSSH-ChachaPoly
 or using git:
 git clone https://github.com/lkinley/Crypt-OpenSSH-ChachaPoly.git
 If the module is not installed, Net::SSH::Perl will fall back on
-other ciphers.
+other ciphers without generating errors.
 
 The module Crypt::OpenBSD::Blowfish is required for encrypted
-Ed25519 key support.  It can be acquired from Git Hub at:
+Ed25519 key support.  (It is included in this distribution).
+It can also be acquired from Git Hub at:
 https://github.com/lkinley/Crypt-OpenBSD-Blowfish
 or using git:
 git clone https://github.com/lkinley/Crypt-OpenBSD-Blowfish.git
 If the module is not installed, only unencrypted Ed25519 keys
-can be used.
+can be used without generating errors.
 
 It also optionally requires Digest::BubbleBabble for
 generating bubble babble fingerprints, and Crypt::RSA
