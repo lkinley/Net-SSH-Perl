@@ -14,17 +14,13 @@ Protocol 1
 
 Protocol 2
 
-    * BSD::arc4random (1.50 or greater)
+    * CryptX
     * Crypt::DSA (0.03 or greater)
     * Crypt::DH (0.01 or greater)
     * Crypt::Curve25519 (0.04 or greater)
     * Crypt::Ed25519
-    * Crypt::OpenSSL::AES
     * Math::Pari (2.001804 or greater)
     * MIME::Base64
-    * Digest::MD5
-    * Digest::SHA
-    * Digest::HMAC_MD5
     * Convert::PEM (0.05 or greater)
     * IO::Socket
 

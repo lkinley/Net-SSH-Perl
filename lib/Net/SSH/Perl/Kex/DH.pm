@@ -13,7 +13,7 @@ use Net::SSH::Perl::Util qw( bitsize );
 use Carp qw( croak );
 use Crypt::DH;
 use Math::Pari;
-use Digest::SHA qw( sha1 );
+use Crypt::Digest::SHA1 qw( sha1 );
 use Scalar::Util qw(weaken);
 
 use Net::SSH::Perl::Kex;

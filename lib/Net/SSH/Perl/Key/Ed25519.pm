@@ -4,7 +4,7 @@ use strict;
 use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Constants qw( SSH_COMPAT_BUG_SIGBLOB );
 use Net::SSH::Perl::Util qw( :ssh2mp );
-use Digest::SHA qw( sha512 );
+use Crypt::Digest::SHA512 qw( sha512 );
 
 use Net::SSH::Perl::Key;
 use base qw( Net::SSH::Perl::Key );
@@ -230,8 +230,7 @@ sub dump_public { $_[0]->ssh_name . ' ' . encode_base64( $_[0]->as_blob, '') .
 
 sub sign {
     my $key = shift;
-    my($data) = @_;
-    my $dsa = Crypt::DSA->new;
+    my $data = shift;
     my $sig = Crypt::Ed25519::sign($data, $key->{pub}, $key->{priv});
 
     my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );

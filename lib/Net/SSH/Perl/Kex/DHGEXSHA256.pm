@@ -3,7 +3,7 @@ use strict;
 
 use Net::SSH::Perl::Kex;
 use base qw( Net::SSH::Perl::Kex::DHGEX );
-use Digest::SHA qw( sha256 );
+use Crypt::Digest::SHA256 qw( sha256 );
 
 sub derive_key {
     my($kex, $id, $need, $hash, $shared_secret, $session_id) = @_;

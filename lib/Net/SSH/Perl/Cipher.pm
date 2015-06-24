@@ -65,7 +65,7 @@ sub new {
 
 sub new_from_key_str {
     my $class = shift;
-    eval "use Digest::MD5 qw( md5 );";
+    eval "use Crypt::Digest::MD5 qw( md5 );";
     defined $_[1] ?
         $class->new($_[0], md5($_[1])) :
         $class->new(@_);

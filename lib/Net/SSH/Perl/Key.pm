@@ -4,7 +4,7 @@ package Net::SSH::Perl::Key;
 use strict;
 use warnings;
 
-use Digest::MD5 qw( md5 );
+use Crypt::Digest::MD5 qw( md5 );
 use Net::SSH::Perl::Buffer;
 
 sub new {
@@ -104,7 +104,7 @@ sub fingerprint {
 sub _fp_bubblebabble {
     eval "use Digest::BubbleBabble qw( bubblebabble )";
     die "Can't load BubbleBabble implementation: $@" if $@;
-    eval "use Digest::SHA qw( sha1 )";
+    eval "use Crypt::Digest::SHA1 qw( sha1 )";
     die "Can't load SHA1: $@" if $@;
     bubblebabble( Digest => sha1($_[0]) )
 }

@@ -2,7 +2,7 @@ package Net::SSH::Perl::Kex::DHGEXSHA1;
 use strict;
 
 use base qw( Net::SSH::Perl::Kex::DHGEX );
-use Digest::SHA qw( sha1 );
+use Crypt::Digest::SHA1 qw( sha1 );
 
 sub derive_key {
     my($kex, $id, $need, $hash, $shared_secret, $session_id) = @_;

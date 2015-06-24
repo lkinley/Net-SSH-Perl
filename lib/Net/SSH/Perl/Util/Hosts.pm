@@ -44,7 +44,7 @@ sub _check_host_in_hostfile {
 			## If not, give one warning per file
 			next if $hashmodules >= 1;
 			if (!$hashmodules) {
-				eval { require Digest::HMAC_SHA1; };
+				eval { require Crypt::Mac::HMAC; };
 				if ($@) {
 					$hashmodules += 1;
 				}
@@ -65,7 +65,7 @@ sub _check_host_in_hostfile {
 			}
 
 			my $rawsalt = MIME::Base64::decode_base64($salt);
-			my $hash = MIME::Base64::encode_base64(Digest::HMAC_SHA1::hmac_sha1($host,$rawsalt));
+			my $hash = MIME::Base64::encode_base64(Crypt::Mac::HMAC::hmac('SHA1',$rawsalt,$host));
 			chomp $hash;
 			$checkhost = "|1|$salt|$hash";
 		}

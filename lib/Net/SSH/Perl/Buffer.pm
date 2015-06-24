@@ -172,7 +172,6 @@ sub _get_mp_int_ssh2 {
 sub _put_mp_int_ssh2 {
     my $buf = shift;
     my $int = shift;
-    my $bytes = (bitsize($int) / 8) + 1;
     my $bin = mp2bin($int);
     my $hasnohigh = (vec($bin, 0, 8) & 0x80) ? 0 : 1;
     $bin = "\0" . $bin unless $hasnohigh;
