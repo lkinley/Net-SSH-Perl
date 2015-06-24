@@ -6,7 +6,7 @@ use Net::SSH::Perl::Cipher;
 use base qw( Net::SSH::Perl::Cipher );
 
 use Net::SSH::Perl::Cipher::CTR;
-use Crypt::OpenSSL::AES;
+use Crypt::Cipher::AES;
 
 sub new {
     my $class = shift;
@@ -23,7 +23,7 @@ sub init {
     my($key, $iv) = @_;
 
     $key = substr($key,0,$ciph->keysize);
-    my $aes = Crypt::OpenSSL::AES->new($key);
+    my $aes = Crypt::Cipher::AES->new($key);
     $ciph->{ctr} = Net::SSH::Perl::Cipher::CTR->new($aes, $iv);
 }
 

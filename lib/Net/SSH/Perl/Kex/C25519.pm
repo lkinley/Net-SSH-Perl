@@ -5,17 +5,16 @@ use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Packet;
 use Net::SSH::Perl::Constants qw( :msg2 :kex );
 use Net::SSH::Perl::Key;
-use Net::SSH::Perl::Util qw( bitsize );
 
 use Carp qw( croak );
 use Crypt::DH;
-use Math::Pari;
-use Digest::SHA qw( sha256 );
+use Crypt::Digest::SHA256 qw( sha256 );
 use Scalar::Util qw(weaken);
-use BSD::arc4random;
-use Crypt::Curve25519;
+use Crypt::PRNG qw( random_bytes );
+use Crypt::Curve25519 qw( curve25519_secret_key
+                          curve25519_public_key
+                          curve25519_shared_secret );
 
-use Net::SSH::Perl::Kex;
 use base qw( Net::SSH::Perl::Kex );
 
 use constant CURVE25519_SIZE => 32;
@@ -34,7 +33,7 @@ sub exchange {
     my $packet;
 
     $ssh->debug('Generating ephemeral key pair.');
-    my $rand = BSD::arc4random::arc4random_bytes(CURVE25519_SIZE);
+    my $rand = random_bytes(CURVE25519_SIZE);
     my $c_sec_key = curve25519_secret_key($rand);
     my $c_pub_key = curve25519_public_key($c_sec_key);
 
