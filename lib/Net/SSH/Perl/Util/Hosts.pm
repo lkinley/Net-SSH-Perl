@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Util::Hosts;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Constants qw( :hosts );
 

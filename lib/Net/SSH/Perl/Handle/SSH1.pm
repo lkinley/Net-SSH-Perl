@@ -1,5 +1,6 @@
 package Net::SSH::Perl::Handle::SSH1;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Constants qw(

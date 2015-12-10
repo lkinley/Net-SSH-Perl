@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Key::RSA1;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Util qw( :ssh1mp :authfile );
 

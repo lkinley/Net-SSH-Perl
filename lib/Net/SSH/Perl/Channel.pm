@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Channel;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Constants qw( :msg2 :channels );

@@ -3,6 +3,7 @@
 package Net::SSH::Perl::Auth::PublicKey;
 
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Constants qw(
     SSH2_MSG_USERAUTH_REQUEST

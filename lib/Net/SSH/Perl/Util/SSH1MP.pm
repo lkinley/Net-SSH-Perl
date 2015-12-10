@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Util::SSH1MP;
 use strict;
+use warnings;
 
 use Digest::MD5 qw( md5 );
 use Math::GMP;

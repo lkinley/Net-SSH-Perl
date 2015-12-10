@@ -3,6 +3,7 @@
 package Net::SSH::Perl::Comp::Zlib;
 
 use strict;
+use warnings;
 use Carp qw( croak );
 require Compress::Zlib;
 

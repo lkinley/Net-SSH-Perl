@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Util::Term;
 use strict;
+use warnings;
 
 sub _prompt {
     my($prompt, $def, $echo) = @_;

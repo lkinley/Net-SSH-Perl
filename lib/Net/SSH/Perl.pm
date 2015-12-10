@@ -2,16 +2,16 @@
 
 package Net::SSH::Perl;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Packet;
 use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Config;
 use Net::SSH::Perl::Constants qw( :protocol :compat :hosts );
 use Net::SSH::Perl::Cipher;
-use Net::SSH::Perl::Util qw( :hosts _read_yes_or_no );
-use Data::Dumper;
+use Net::SSH::Perl::Util qw( :hosts _read_yes_or_no _current_user_win32 );
 
-use Errno qw( EAGAIN EWOULDBLOCK );
+use Errno;
 
 use vars qw( $VERSION $CONFIG $HOSTNAME );
 $CONFIG = {};
@@ -21,14 +21,13 @@ use IO::Socket;
 use Fcntl;
 use Symbol;
 use Carp qw( croak );
+use File::Spec::Functions qw( catfile );
 use Sys::Hostname;
 eval {
     $HOSTNAME = hostname();
 };
 
-$VERSION = '1.38';
-
-sub VERSION { $VERSION }
+$VERSION = '1.42';
 
 sub new {
     my $class = shift;
@@ -99,6 +98,10 @@ sub client_version_string { $_[0]->{client_version_string} }
 sub server_version_string { $_[0]->{server_version_string} }
 
 sub _current_user {
+    if ( $^O eq 'MSWin32' ) {
+        return _current_user_win32();
+    }
+
     my $user;
     eval { $user = scalar getpwuid $> };
     return $user;
@@ -108,8 +111,12 @@ sub _init {
     my $ssh = shift;
 
     my %arg = @_;
-    my $user_config = delete $arg{user_config} || "$ENV{HOME}/.ssh/config";
-    my $sys_config  = delete $arg{sys_config}  || "/etc/ssh_config";
+    my $user_config = delete $arg{user_config}
+      || catfile($ENV{HOME} || $ENV{USERPROFILE}, '.ssh', 'config');
+    my $sys_config  = delete $arg{sys_config}
+      || $^O eq 'MSWin32'
+        ? catfile($ENV{WINDIR}, 'ssh_config')
+        : "/etc/ssh_config";
 
     my $directives = delete $arg{options} || [];
 
@@ -213,8 +220,14 @@ sub _connect {
     $ssh->{session}{sock} = $sock;
     $ssh->_exchange_identification;
 
-    defined($sock->blocking(0))
-        or die "Can't set socket non-blocking: $!";
+    if ($^O eq 'MSWin32') {
+      my $nonblocking = 1;
+      ioctl $sock, 0x8004667e, \\$nonblocking;
+    }
+    else {
+      defined($sock->blocking(0))
+          or die "Can't set socket non-blocking: $!";
+    }
 
     $ssh->debug("Connection established.");
 }
@@ -269,7 +282,7 @@ sub _read_version_line {
         my $buf;
         my $len = sysread($sock, $buf, 1);
         unless(defined($len)) {
-            next if $! == EAGAIN || $! == EWOULDBLOCK;
+            next if $!{EAGAIN} || $!{EWOULDBLOCK};
             croak "Read from socket failed: $!";
         }
         croak "Connection closed by remote host" if $len == 0;

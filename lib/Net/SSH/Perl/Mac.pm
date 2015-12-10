@@ -3,6 +3,7 @@
 package Net::SSH::Perl::Mac;
 
 use strict;
+use warnings;
 use Carp qw( croak );
 
 use vars qw( %MAC %MAC_REVERSE %SUPPORTED );

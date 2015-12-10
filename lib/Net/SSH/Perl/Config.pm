@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Config;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Constants qw( :protocol );
 use vars qw( %DIRECTIVES $AUTOLOAD );

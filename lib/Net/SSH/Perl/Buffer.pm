@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Buffer;
 use strict;
+use warnings;
 
 {
     my %MP_MAP = (

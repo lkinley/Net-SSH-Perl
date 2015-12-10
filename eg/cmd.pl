@@ -28,7 +28,7 @@ my $ssh = Net::SSH::Perl->new($host || $this_host,
     cipher => Net::SSH::Perl::Cipher::name($c),
     debug => 1);
 
-my $this_user = scalar getpwuid($<);
+my $this_user = $ENV{USERNAME} || scalar getpwuid($<);
 print "Enter your username on that host: [$this_user] ";
 chomp(my $user = <STDIN>);
 

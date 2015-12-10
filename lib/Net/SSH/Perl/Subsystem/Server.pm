@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Subsystem::Server;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Buffer;
 use Carp qw( croak );

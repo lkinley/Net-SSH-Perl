@@ -3,6 +3,7 @@
 package Net::SSH::Perl::Comp;
 
 use strict;
+use warnings;
 use Carp qw( croak );
 
 use vars qw( %COMP );

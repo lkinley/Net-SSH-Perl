@@ -3,6 +3,7 @@
 package Net::SSH::Perl::Auth::Password;
 
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Constants qw(
     SSH_CMSG_AUTH_PASSWORD

@@ -2,8 +2,10 @@
 
 package Net::SSH::Perl::Kex;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Kex::DH1;
+use Net::SSH::Perl::Kex::DH14;
 use Net::SSH::Perl::Cipher;
 use Net::SSH::Perl::Mac;
 use Net::SSH::Perl::Comp;
@@ -99,12 +101,12 @@ sub exchange {
     bless $kex, $kex->{class_name};
     $kex->exchange;
 
-    $ssh->debug("Waiting for NEWKEYS message.");
-    $packet = Net::SSH::Perl::Packet->read_expect($ssh, SSH2_MSG_NEWKEYS);
-
     $ssh->debug("Send NEWKEYS.");
     $packet = $ssh->packet_start(SSH2_MSG_NEWKEYS);
     $packet->send;
+
+    $ssh->debug("Waiting for NEWKEYS message.");
+    $packet = Net::SSH::Perl::Packet->read_expect($ssh, SSH2_MSG_NEWKEYS);
 
     $ssh->debug("Enabling encryption/MAC/compression.");
     $ssh->{kex} = $kex;
@@ -138,12 +140,12 @@ sub exchange_kexinit {
     $packet->send;
 
     if ( defined $received_packet ) {
-	$ssh->debug("Received key-exchange init (KEXINIT), sent response.");
-	$packet = $received_packet;
+        $ssh->debug("Received key-exchange init (KEXINIT), sent response.");
+        $packet = $received_packet;
     }
     else {
-	$ssh->debug("Sent key-exchange init (KEXINIT), wait response.");
-	$packet = Net::SSH::Perl::Packet->read_expect($ssh, SSH2_MSG_KEXINIT);
+        $ssh->debug("Sent key-exchange init (KEXINIT), wait response.");
+        $packet = Net::SSH::Perl::Packet->read_expect($ssh, SSH2_MSG_KEXINIT);
     }
     $kex->{server_kexinit} = $packet->data;
 
@@ -161,7 +163,7 @@ sub derive_keys {
     my @keys;
     for my $i (0..5) {
         push @keys, derive_key(ord('A')+$i, $kex->{we_need}, $hash,
-			       $shared_secret, $session_id);
+                   $shared_secret, $session_id);
     }
     my $is_ssh2 = $kex->{ssh}->protocol == PROTOCOL_SSH2;
     for my $mode (0, 1) {
@@ -219,6 +221,9 @@ sub choose_kex {
     $kex->{algorithm} = $name;
     if ($name eq KEX_DH1) {
         $kex->{class_name} = __PACKAGE__ . "::DH1";
+    }
+    elsif ($name eq KEX_DH14) {
+        $kex->{class_name} = __PACKAGE__ . "::DH14";
     }
     else {
         croak "Bad kex algorithm $name";

@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::SSH2;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Kex;
 use Net::SSH::Perl::ChannelMgr;
@@ -12,16 +13,36 @@ use Net::SSH::Perl::Constants qw( :protocol :msg2
 use Net::SSH::Perl::Cipher;
 use Net::SSH::Perl::AuthMgr;
 use Net::SSH::Perl::Comp;
-use Net::SSH::Perl::Util qw(:hosts);
+use Net::SSH::Perl::Util qw( :hosts :win32 );
 
 use base qw( Net::SSH::Perl );
 
 use Carp qw( croak );
+use File::Spec::Functions qw( catfile );
+use File::HomeDir ();
+
+use Errno;
+
+use vars qw( $VERSION $CONFIG $HOSTNAME );
+$VERSION = $Net::SSH::Perl::VERSION;
 
 sub select_class { 'IO::Select' }
 
 sub _dup {
     my($fh, $mode) = @_;
+
+    if ( $^O eq 'MSWin32' ) {
+        #
+        # On Windows platform select() is working only for sockets.
+        #
+        my ( $r, $w ) = _socketpair()
+            or die "Could not create socketpair: $!\n";
+
+        # TODO: full support (e.g. stdin)
+
+        return ( $mode eq '>' ) ? $w : $r;
+    }
+
     my $dup = Symbol::gensym;
     my $str = "${mode}&$fh";
     open ($dup, $str) or die "Could not dupe: $!\n"; ## no critic
@@ -36,22 +57,27 @@ sub version_string {
 
 sub _proto_init {
     my $ssh = shift;
-    my $home = $ENV{HOME} || (getpwuid($>))[7];
-    unless ($ssh->{config}->get('user_known_hosts')) {
+    my $home = File::HomeDir->my_home;
+    my $config = $ssh->{config};
+
+    unless ($config->get('user_known_hosts')) {
         defined $home or croak "Cannot determine home directory, please set the environment variable HOME";
-        $ssh->{config}->set('user_known_hosts', "$home/.ssh/known_hosts2");
+        $config->set('user_known_hosts', catfile($home, '.ssh', 'known_hosts2'));
     }
-    unless ($ssh->{config}->get('global_known_hosts')) {
-        $ssh->{config}->set('global_known_hosts', "/etc/ssh_known_hosts2");
+    unless ($config->get('global_known_hosts')) {
+        my $glob_known_hosts = $^O eq 'MSWin32'
+          ? catfile( $ENV{WINDIR}, 'ssh_known_hosts2' )
+          : '/etc/ssh_known_hosts2';
+        $config->set('global_known_hosts', $glob_known_hosts);
     }
-    unless (my $if = $ssh->{config}->get('identity_files')) {
+    unless (my $if = $config->get('identity_files')) {
         defined $home or croak "Cannot determine home directory, please set the environment variable HOME";
-        $ssh->{config}->set('identity_files', [ "$home/.ssh/id_dsa" ]);
+        $config->set('identity_files', [ catfile($home, '.ssh', 'id_dsa') ]);
     }
 
     for my $a (qw( password dsa kbd_interactive )) {
-        $ssh->{config}->set("auth_$a", 1)
-            unless defined $ssh->{config}->get("auth_$a");
+        $config->set("auth_$a", 1)
+            unless defined $config->get("auth_$a");
     }
 }
 
@@ -246,8 +272,8 @@ sub shell {
             my @sz = Term::ReadKey::GetTerminalSize($ssh->sock);
             if (defined $sz[0]) {
                 $foundsize = 1;
-                $r_packet->put_int32($sz[1]); # height
                 $r_packet->put_int32($sz[0]); # width
+                $r_packet->put_int32($sz[1]); # height
                 $r_packet->put_int32($sz[2]); # xpix
                 $r_packet->put_int32($sz[3]); # ypix
             }
@@ -368,6 +394,11 @@ sub client_loop {
         last unless $oc > 1;
 
         my($rready, $wready) = $select_class->select($rb, $wb);
+        unless (defined $rready or defined $wready) {
+            next if ( $!{EAGAIN} || $!{EINTR} );
+            die "select: $!";
+        }
+
         $cmgr->process_input_packets($rready, $wready);
 
         for my $ab (@$rready) {

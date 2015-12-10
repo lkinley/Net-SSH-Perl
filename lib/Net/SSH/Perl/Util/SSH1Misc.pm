@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Util::SSH1Misc;
 use strict;
+use warnings;
 
 use String::CRC32;
 

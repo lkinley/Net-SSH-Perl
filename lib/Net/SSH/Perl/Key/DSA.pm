@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Key::DSA;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Constants qw( SSH_COMPAT_BUG_SIGBLOB );

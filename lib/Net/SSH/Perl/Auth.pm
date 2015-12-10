@@ -3,6 +3,7 @@
 package Net::SSH::Perl::Auth;
 
 use strict;
+use warnings;
 use Carp qw( croak );
 
 use vars qw( %AUTH %AUTH_REVERSE @AUTH_ORDER %SUPPORTED );

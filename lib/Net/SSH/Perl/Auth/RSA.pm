@@ -3,6 +3,7 @@
 package Net::SSH::Perl::Auth::RSA;
 
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Constants qw(
     SSH_SMSG_FAILURE

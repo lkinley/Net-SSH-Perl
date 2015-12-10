@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Constants;
 use strict;
+use warnings;
 
 use vars qw( %CONSTANTS );
 %CONSTANTS = (
@@ -111,7 +112,8 @@ use vars qw( %CONSTANTS );
     'CHAN_CLOSE_RCVD' => 0x02,
 
     'KEX_DH1' => 'diffie-hellman-group1-sha1',
-    'KEX_DEFAULT_KEX' => 'diffie-hellman-group1-sha1',
+    'KEX_DH14' => 'diffie-hellman-group14-sha1',
+    'KEX_DEFAULT_KEX' => 'diffie-hellman-group1-sha1,diffie-hellman-group14-sha1',
     'KEX_DEFAULT_PK_ALG' => 'ssh-dss,ssh-rsa',
     'KEX_DEFAULT_ENCRYPT' => '3des-cbc,blowfish-cbc,arcfour',
     'KEX_DEFAULT_MAC' => 'hmac-sha1,hmac-md5',

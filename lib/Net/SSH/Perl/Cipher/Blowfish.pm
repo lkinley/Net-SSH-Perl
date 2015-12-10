@@ -3,6 +3,7 @@
 package Net::SSH::Perl::Cipher::Blowfish;
 
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Cipher;
 use base qw( Net::SSH::Perl::Cipher );

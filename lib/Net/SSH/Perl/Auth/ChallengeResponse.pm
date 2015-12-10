@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Auth::ChallengeResponse;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Constants qw(
     SSH_CMSG_AUTH_TIS

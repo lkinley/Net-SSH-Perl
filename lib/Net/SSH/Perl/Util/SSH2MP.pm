@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Util::SSH2MP;
 use strict;
+use warnings;
 
 use Math::Pari qw( PARI floor pari2num Mod lift );
 

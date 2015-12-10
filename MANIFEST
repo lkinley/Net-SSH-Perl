@@ -37,7 +37,9 @@ lib/Net/SSH/Perl/Handle.pm
 lib/Net/SSH/Perl/Handle/SSH1.pm
 lib/Net/SSH/Perl/Handle/SSH2.pm
 lib/Net/SSH/Perl/Kex.pm
+lib/Net/SSH/Perl/Kex/DH.pm
 lib/Net/SSH/Perl/Kex/DH1.pm
+lib/Net/SSH/Perl/Kex/DH14.pm
 lib/Net/SSH/Perl/Key.pm
 lib/Net/SSH/Perl/Key/DSA.pm
 lib/Net/SSH/Perl/Key/RSA.pm
@@ -56,11 +58,12 @@ lib/Net/SSH/Perl/Util/SSH1Misc.pm
 lib/Net/SSH/Perl/Util/SSH1MP.pm
 lib/Net/SSH/Perl/Util/SSH2MP.pm
 lib/Net/SSH/Perl/Util/Term.pm
+lib/Net/SSH/Perl/Util/Win32.pm
 LICENSE
 Makefile.PL
-MANIFEST
+MANIFEST			This list of files
 MANIFEST.SKIP
-META.yml			Module meta-data (added by MakeMaker)
+META.yml
 README
 SIGNATURE
 t/00-signature.t

@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::AuthMgr;
 use strict;
+use warnings;
 
 use Carp qw( croak );
 

@@ -3,6 +3,7 @@
 package Net::SSH::Perl::Packet;
 
 use strict;
+use warnings;
 use Carp qw( croak );
 use IO::Select;
 use POSIX qw( :errno_h );

@@ -7,6 +7,8 @@ use ExtUtils::MakeMaker qw(prompt WriteMakefile);
 my %prereq = (
         'Digest::MD5'       => 0,
         'IO::Socket'        => 0,
+        'File::Spec'        => 0,
+        'File::HomeDir'     => 0,
 );
 
 my %SSH_PREREQ = (
@@ -107,6 +109,7 @@ MSG
 }
 
 WriteMakefile(
+    (MM->can('signature_target') ? (SIGN => 1) : ()),
     NAME         => 'Net::SSH::Perl',
     DISTNAME     => 'Net-SSH-Perl',
     VERSION_FROM => 'lib/Net/SSH/Perl.pm',

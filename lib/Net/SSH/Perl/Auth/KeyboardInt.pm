@@ -3,6 +3,7 @@
 package Net::SSH::Perl::Auth::KeyboardInt;
 
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Util qw( _prompt );
 use Net::SSH::Perl::Constants qw(

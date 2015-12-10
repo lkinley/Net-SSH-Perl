@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Util::Authfile;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Constants qw( PRIVATE_KEY_ID_STRING );

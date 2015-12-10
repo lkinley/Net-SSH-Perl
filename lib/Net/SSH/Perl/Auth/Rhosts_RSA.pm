@@ -3,6 +3,7 @@
 package Net::SSH::Perl::Auth::Rhosts_RSA;
 
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Constants qw(
     SSH_SMSG_FAILURE
@@ -17,6 +18,7 @@ use Net::SSH::Perl::Auth;
 use base qw( Net::SSH::Perl::Auth );
 
 use Scalar::Util qw(weaken);
+use File::Spec::Functions qw( catfile );
 
 sub new {
     my $class = shift;
@@ -38,7 +40,10 @@ sub authenticate {
 
     my $private_key;
     eval {
-        $private_key = _load_private_key("/etc/ssh_host_key");
+        my $ssh_host_key = $^O eq 'MSWin32'
+          ? catfile($ENV{WINDIR}, 'ssh_host_key')
+          : '/etc/ssh_host_key';
+        $private_key = _load_private_key($ssh_host_key);
     };
     $ssh->debug("Rhosts with RSA authentication failed: Can't load private host key."),
         return 0 if $@;

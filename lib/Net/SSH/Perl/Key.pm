@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Key;
 use strict;
+use warnings;
 
 use Digest::MD5 qw( md5 );
 use Net::SSH::Perl::Buffer;

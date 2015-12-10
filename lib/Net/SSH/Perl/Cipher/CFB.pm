@@ -6,6 +6,7 @@
 
 package Net::SSH::Perl::Cipher::CFB;
 use strict;
+use warnings;
 
 sub new {
     my($class, $ciph, $iv) = @_;

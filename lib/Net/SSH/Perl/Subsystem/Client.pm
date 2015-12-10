@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Subsystem::Client;
 use strict;
+use warnings;
 
 use Net::SSH::Perl::Constants qw(
     SSH2_MSG_CHANNEL_OPEN_CONFIRMATION

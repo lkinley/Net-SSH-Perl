@@ -3,6 +3,7 @@
 package Net::SSH::Perl::Cipher;
 
 use strict;
+use warnings;
 use Carp qw( croak );
 
 use vars qw( %CIPHERS %CIPHERS_SSH2 %CIPH_REVERSE %SUPPORTED );

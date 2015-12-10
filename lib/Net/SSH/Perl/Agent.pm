@@ -2,6 +2,7 @@
 
 package Net::SSH::Perl::Agent;
 use strict;
+use warnings;
 
 use IO::Socket;
 use Carp qw( croak );

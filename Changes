@@ -1,8 +1,29 @@
 Revision history for Net::SSH::Perl
 
+1.42 2015.09.28
+    - Fix issue with long selects getting interrupted by signals and dying (Andrew Hoying)
+    - fix version cpan meta info
+
+1.41 2015.09.18
+    - use Errno constants in more portable way, see perldoc Errno
+
+1.40 2015.09.17
+    - declare new dependency to File::HomeDir in Makefile.PL
+
+1.39 2015.09.15
+
+    - RT #83978 - fix shell terminal width and height (lharey)
+    - RT #94574 - fix Algorithm negotiation issue in ::Kex.pm
+      (Brian Curnow, Michael Gray)
+    - RT #105728 - fix VERSION methods (reported by Karen Etheridge)
+    - code modernization (strict+warnings) (gh0stwizard)
+    - pass tests on Win32 (gh0stwizard)
+    - use Win32::LoginName on Windows (Michael Gray)
+    - use File::HomeDir to simplify handling (Michael Gray)
+
 1.38 2014.10.06
 
-    - RT #99284 - install valid SIGNATURE file
+    - RT #99284 - install valid SIGNATURE file (Greg Sabino Mullane)
 
 1.37 2014.03.17
 
