@@ -10,6 +10,12 @@ use vars qw( %MAC %MAC_REVERSE %SUPPORTED );
 %MAC = (
     'hmac-sha1' => 'SHA1',
     'hmac-md5'  => 'MD5',
+    'hmac-sha2-256'  => 'SHA2_256',
+    'hmac-sha2-512'  => 'SHA2_512',
+    'hmac-sha2-256-etm@openssh.com'
+                     => 'SHA2_256',
+    'hmac-sha2-512-etm@openssh.com'
+                     => 'SHA2_512',
 );
 
 sub new {
@@ -18,6 +24,7 @@ sub new {
     my $mac_class = join '::', __PACKAGE__, $MAC{$type};
     my $mac = bless {}, $mac_class;
     $mac->init(@_) if @_;
+    $mac->{etm} = $type =~ /-etm\@openssh.com$/;
     $mac;
 }
 
@@ -36,6 +43,7 @@ sub key_len {
     $mac->{key_len} = shift if @_;
     $mac->{key_len};
 }
+sub etm { shift->{etm} }
 
 package Net::SSH::Perl::Mac::MD5;
 use strict;
@@ -52,7 +60,7 @@ sub len { 16 }
 
 package Net::SSH::Perl::Mac::SHA1;
 use strict;
-use Digest::HMAC_SHA1 qw( hmac_sha1 );
+use Digest::SHA qw( hmac_sha1 );
 use vars qw( @ISA );
 @ISA = qw( Net::SSH::Perl::Mac );
 
@@ -62,6 +70,34 @@ sub hmac {
 }
 
 sub len { 20 }
+
+package Net::SSH::Perl::Mac::SHA2_256;
+use strict;
+use Digest::SHA qw( hmac_sha256 );
+use vars qw( @ISA );
+@ISA = qw( Net::SSH::Perl::Mac );
+
+sub hmac {
+    my $mac = shift;
+    my $data = shift;
+    hmac_sha256($data, $mac->{key});
+}
+
+sub len { 32 }
+
+package Net::SSH::Perl::Mac::SHA2_512;
+use strict;
+use Digest::SHA qw( hmac_sha512 );
+use vars qw( @ISA );
+@ISA = qw( Net::SSH::Perl::Mac );
+
+sub hmac {
+    my $mac = shift;
+    my $data = shift;
+    hmac_sha512($data, $mac->{key});
+}
+
+sub len { 64 }
 
 1;
 __END__
@@ -148,5 +184,10 @@ or not to compute a MAC on an outgoing packet.
 
 Please see the Net::SSH::Perl manpage for author, copyright,
 and license information.
+
+hmac-sha2-256 and hmac-sha2-512 support added by:
+Lance Kinley E<lkinley@loyaltymethods.com>
+
+Copyright (c) 2015 Loyalty Methods, Inc.
 
 =cut

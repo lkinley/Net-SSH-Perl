@@ -1,24 +1,27 @@
 --- #YAML:1.0
 name                    : Net-SSH-Perl
-version                 : 1.42
+version                 : 2.00
 abstract                : Perl client interface to SSH
 author:              
   - David Robins <dbrobins@cpan.org>
-
+  - Lance Kinley <lkinley@loyaltymethods.com>
 license                 : perl
 distribution_type       : module
 dynamic_config          : 1
 
 requires:     
+  BSD::arc4random       : 1.50
   Convert::PEM          : 0.05
+  Crypt::Curve25519     : 0.04
   Crypt::DES            : 0
   Crypt::DH             : 0.01
   Crypt::DSA            : 0.11
+  Crypt::Ed25519        : 1.0
   Crypt::IDEA           : 0
+  Crypt::OpenSSL::AES   : 0.03
   Digest::HMAC_MD5      : 0
-  Digest::HMAC_SHA1     : 0
   Digest::MD5           : 0
-  Digest::SHA1          : 2.10
+  Digest::SHA           : 4.0.0
   File::HomeDir         : 0
   IO::Socket            : 0
   Math::GMP             : 1.04

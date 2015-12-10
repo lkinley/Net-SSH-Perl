@@ -1,5 +1,30 @@
 Revision history for Net::SSH::Perl
 
+2.00 2015.12.07
+
+    - Add Chacha20-Poly1305 cipher support for best security
+      (Requires Crypt::OpenSSH::ChachaPoly, see README)
+    - Add AES Cipher support in CTR mode (CBC mode supported in Ed25519
+      keys only)
+    - Add Group Exchange (RFC4523) Diffie-Hellman Key Exchange
+    - Add Curve25519 (curve25519-sha256@libssh.org) Key Exchange support
+      (Requires Crypt::Curve25519)
+    - Add hmac-sha2-256,hmac-sha2-512 MAC support
+    - Add hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com
+      Encrypt-then-MAC (ETM) MAC support
+    - Use BSD::arc4random for encrypted packet padding
+    - Add support for Ed25519 ssh/host keys (Requires Crypt::Ed25519)
+      Encrypted Ed25519 key support requires Crypt::OpenBSD::Blowfish
+      (See README for info)
+    - Default ciphers order is now chacha,aes,3des,blowfish,arcfour
+    - Default KEX order is now Curve25519, DHGEXSHA256, DHGEXSHA1, DH14, DH1
+    - Default MAC order is now hmac-sha2-512-etm@openssh.com,
+      hmac-sha2-256-etm@openssh.com, sha2-512, sha2-256, sha1, md5
+    - SSH Keys can now be in DOS format (no need to remove CR/LF)
+    - SOCKS proxy support via sub class Net::SSH:Perl::Proxy
+    - Now does not abort due to OpenSSH 6.8+ server
+      SSH2_MSG_GLOBAL_REQUEST messages for host key rotation
+
 1.42 2015.09.28
     - Fix issue with long selects getting interrupted by signals and dying (Andrew Hoying)
     - fix version cpan meta info

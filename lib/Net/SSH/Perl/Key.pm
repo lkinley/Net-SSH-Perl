@@ -23,6 +23,7 @@ use vars qw( %KEY_TYPES );
 %KEY_TYPES = (
     'ssh-dss' => 'DSA',
     'ssh-rsa' => 'RSA',
+    'ssh-ed25519' => 'Ed25519',
 );
 
 sub new_from_blob {
@@ -65,6 +66,7 @@ use vars qw( %OBJ_MAP );
     'DSA PRIVATE KEY'  => [ 'DSA' ],
     'SSH2 ENCRYPTED PRIVATE KEY' => [ 'DSA', [ 'SSH2' ] ],
     'RSA PRIVATE KEY'  => [ 'RSA' ],
+    'OPENSSH PRIVATE KEY'  => [ 'Ed25519' ],
 );
 
 sub read_private_pem {
@@ -74,7 +76,7 @@ sub read_private_pem {
     chomp(my $desc = <$fh>);
     close $fh or warn qq{Could not close "$keyfile": $!\n};
     return unless $desc;
-    my($object) = $desc =~ /^-----?\s?BEGIN ([^\n\-]+)\s?-?----$/;
+    my($object) = $desc =~ /^-----?\s?BEGIN ([^\n\-]+)\s?-?----\s*$/;
     $object =~ s/\s*$//;
     my $rec = $OBJ_MAP{$object} or return;
     $class = __PACKAGE__ . "::" . $rec->[0];
@@ -102,7 +104,7 @@ sub fingerprint {
 sub _fp_bubblebabble {
     eval "use Digest::BubbleBabble qw( bubblebabble )";
     die "Can't load BubbleBabble implementation: $@" if $@;
-    eval "use Digest::SHA1 qw( sha1 )";
+    eval "use Digest::SHA qw( sha1 )";
     die "Can't load SHA1: $@" if $@;
     bubblebabble( Digest => sha1($_[0]) )
 }
@@ -124,9 +126,10 @@ Net::SSH::Perl::Key - Public or private key abstraction
 =head1 DESCRIPTION
 
 I<Net::SSH::Perl::Key> implements an abstract base class interface
-to key objects (either DSA or RSA keys, currently). The underlying
-implementation for RSA is an internal, hash-reference implementation;
-the DSA implementation uses I<Crypt::DSA>.
+to key objects (either DSA, RSA, or Ed25519 keys, currently). The
+underlying implementation for RSA is an internal, hash-reference
+implementation.  The DSA implementation uses I<Crypt::DSA>, and
+the Ed25519 implementation uses I<Crypt::Ed25519>.
 
 =head1 USAGE
 
@@ -134,8 +137,7 @@ the DSA implementation uses I<Crypt::DSA>.
 
 Creates a new object of type I<Net::SSH::Perl::Key::$key_type>,
 after loading the class implementing I<$key_type>. I<$key_type>
-should be either C<DSA> or C<RSA1>, currently; these are the
-only supported key implementations at the moment.
+should be C<DSA>, C<RSA1>, or C<Ed25519>.  
 
 I<$blob>, if present, should be a string representation of the key,
 from which the key object can be initialized. In fact, it should
@@ -165,19 +167,27 @@ passphrase, this might be a good time to ask the user for the
 actual passphrase. :)
 
 Returns the new key object, which is blessed into the subclass
-denoted by I<$key_type> (either C<DSA> or C<RSA1>).
+denoted by I<$key_type> (either C<DSA>, C<RSA1> or C<Ed25519>).
 
 =head2 Net::SSH::Perl::Key->keygen($key_type, $bits)
 
-Generates a new key and returns that key. The key returned is
-the private key, which (presumably) contains all of the public
-key data, as well. I<$bits> is the number of bits in the key.
+$key_type is either RSA or DSA.  Generates a new DSA or RSA key 
+and returns that key. The key returned is the private key, which
+(presumably) contains all of the public key data, as well. I<$bits>
+ is the number of bits in the key.
 
 Your I<$key_type> implementation may not support key generation;
 if not, calling this method is a fatal error.
 
 Returns the new key object, which is blessed into the subclass
 denoted by I<$key_type> (either C<DSA> or C<RSA1>).
+
+=head2 Net::SSH::Perl::Key->keygen('Ed25519' [,$comment])
+
+Generates a new Ed25519 key with an optional comment.
+
+Returns the new key object, which is bless into the Ed25519
+subclass.
 
 =head2 Net::SSH::Perl::Key->extract_public($key_type, $key_string)
 
@@ -190,12 +200,15 @@ identity files.
 Returns the new key object, which is blessed into the subclass
 denoted by I<$key_type> (either C<DSA> or C<RSA1>).
 
-=head2 $key->write_private([ $file [, $pass] ])
+=head2 $key->write_private([ $file [, $pass, $ciphername, $rounds] ])
 
 Writes out the private key I<$key> to I<$file>, and encrypts
 it using the passphrase I<$pass>. If I<$pass> is not provided,
 the key is unencrypted, and the only security protection is
-through filesystem protections.
+through filesystem protections.  For Ed25519 keys, optional
+parameters ciphername and rounds can be passed to specify the
+desired cipher to encrypt the key with and how many rounds of
+encryption to employ, respectively.
 
 If I<$file> is not provided, returns the content that would
 have been written to the key file.

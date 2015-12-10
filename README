@@ -14,16 +14,36 @@ Protocol 1
 
 Protocol 2
 
+    * BSD::arc4random (1.50 or greater)
     * Crypt::DSA (0.03 or greater)
     * Crypt::DH (0.01 or greater)
+    * Crypt::Curve25519 (0.04 or greater)
+    * Crypt::Ed25519
+    * Crypt::OpenSSL::AES
     * Math::Pari (2.001804 or greater)
     * MIME::Base64
     * Digest::MD5
-    * Digest::SHA1
+    * Digest::SHA
     * Digest::HMAC_MD5
-    * Digest::HMAC_SHA1
     * Convert::PEM (0.05 or greater)
     * IO::Socket
+
+The module Crypt::OpenSSH::ChachaPoly is required if
+you wish to use the chacha20-poly1305@openssh.com cipher.
+It can be acquired from Git Hub at:
+https://github.com/lkinley/Crypt-OpenSSH-ChachaPoly
+or using git:
+git clone https://github.com/lkinley/Crypt-OpenSSH-ChachaPoly.git
+If the module is not installed, Net::SSH::Perl will fall back on
+other ciphers.
+
+The module Crypt::OpenBSD::Blowfish is required for encrypted
+Ed25519 key support.  It can be acquired from Git Hub at:
+https://github.com/lkinley/Crypt-OpenBSD-Blowfish
+or using git:
+git clone https://github.com/lkinley/Crypt-OpenBSD-Blowfish.git
+If the module is not installed, only unencrypted Ed25519 keys
+can be used.
 
 It also optionally requires Digest::BubbleBabble for
 generating bubble babble fingerprints, and Crypt::RSA
@@ -93,3 +113,17 @@ that the actual tools support; obviously, only those options
 supported by Net::SSH::Perl are supported by the two scripts.
 
 David Robins / dbrobins@cpan.org
+
+Support for the following features by:
+Lance Kinley / lkinley@loyaltymethods.com
+
+Diffie-Hellman Group 14 Key Exchange
+Diffie-Hellman Group Exchange
+Curve25519 Key Exchange (curve25519-sha256@libssh.org)
+AES Cipher support (aes256-ctr,aes192-ctr,aes128-ctr)
+Chacha20-Poly1305 cipher support (chacha20-poly1305@openssh.com)
+hmac-sha2-256,hmac-sha2-512 MAC support
+hmac-sha2-256-etm@openssh.com, hmac-sha2-512-etm@openssh.com
+  Encrypt-then-MAC (ETM) MAC support
+Ed25519 key support, including encrypted keys that are enciphered
+  with supported crypto algorithms

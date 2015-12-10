@@ -15,11 +15,25 @@ BEGIN {
         DES3 => 3,
         RC4 => 5,
         Blowfish => 6,
+        AES128_CTR => 7,
+        AES192_CTR => 8,
+        AES256_CTR => 9,
+        AES128_CBC => 10,
+        AES192_CBC => 11,
+        AES256_CBC => 12,
+        ChachaPoly => 13,
     );
     %CIPHERS_SSH2 = (
         '3des-cbc' => 'DES3',
         'blowfish-cbc' => 'Blowfish',
         'arcfour' => 'RC4',
+        'aes128-ctr' => 'AES128_CTR',
+        'aes192-ctr' => 'AES192_CTR',
+        'aes256-ctr' => 'AES256_CTR',
+        'aes128-cbc' => 'AES128_CBC',
+        'aes192-cbc' => 'AES192_CBC',
+        'aes256-cbc' => 'AES256_CBC',
+        'chacha20-poly1305@openssh.com' => 'ChachaPoly',
     );
     %CIPH_REVERSE = reverse %CIPHERS;
 }
@@ -59,6 +73,8 @@ sub new_from_key_str {
 
 sub enabled { $_[0]->{enabled} }
 sub enable { $_[0]->{enabled} = 1 }
+sub authlen { 0 }
+sub ivlen { shift->blocksize }
 
 sub id {
     my $this = shift;

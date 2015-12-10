@@ -4,8 +4,6 @@ package Net::SSH::Perl::Kex;
 use strict;
 use warnings;
 
-use Net::SSH::Perl::Kex::DH1;
-use Net::SSH::Perl::Kex::DH14;
 use Net::SSH::Perl::Cipher;
 use Net::SSH::Perl::Mac;
 use Net::SSH::Perl::Comp;
@@ -19,7 +17,6 @@ use Net::SSH::Perl::Constants qw(
     SSH_COMPAT_BUG_HMAC );
 
 use Carp qw( croak );
-use Digest::SHA1 qw( sha1 );
 use Scalar::Util qw(weaken);
 
 use vars qw( @PROPOSAL );
@@ -162,28 +159,17 @@ sub derive_keys {
     my($hash, $shared_secret, $session_id) = @_;
     my @keys;
     for my $i (0..5) {
-        push @keys, derive_key(ord('A')+$i, $kex->{we_need}, $hash,
-                   $shared_secret, $session_id);
+        push @keys, $kex->derive_key(ord('A')+$i, $kex->{we_need}, $hash,
+			       $shared_secret, $session_id);
     }
     my $is_ssh2 = $kex->{ssh}->protocol == PROTOCOL_SSH2;
     for my $mode (0, 1) {
         my $ctos = $mode == 1;
         $kex->{ciph}[$mode]->init($keys[$ctos ? 2 : 3], $keys[$ctos ? 0 : 1],
             $is_ssh2);
-        $kex->{mac}[$mode]->init($keys[$ctos ? 4 : 5]);
+        $kex->{mac}[$mode]->init($keys[$ctos ? 4 : 5]) if $kex->{mac}[$mode];
         $kex->{comp}[$mode]->init(6) if $kex->{comp}[$mode];
     }
-}
-
-sub derive_key {
-    my($id, $need, $hash, $shared_secret, $session_id) = @_;
-    my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
-    $b->put_mp_int($shared_secret);
-    my $digest = sha1($b->bytes, $hash, chr($id), $session_id);
-    for (my $have = 20; $need > $have; $have += 20) {
-        $digest .= sha1($b->bytes, $hash, $digest);
-    }
-    $digest;
 }
 
 sub choose_conf {
@@ -195,7 +181,11 @@ sub choose_conf {
         my $nmac  = $ctos ? PROPOSAL_MAC_ALGS_CTOS  : PROPOSAL_MAC_ALGS_STOC;
         my $ncomp = $ctos ? PROPOSAL_COMP_ALGS_CTOS : PROPOSAL_COMP_ALGS_STOC;
         $kex->choose_ciph($mode, $cprop->[$nciph], $sprop->[$nciph]);
-        $kex->choose_mac ($mode, $cprop->[$nmac],  $sprop->[$nmac]);
+        if ($kex->{ciph}[$mode]->authlen) {
+            $kex->{mac_name}[$mode] = '<implicit>';
+        } else {
+            $kex->choose_mac ($mode, $cprop->[$nmac],  $sprop->[$nmac])
+        }
         $kex->choose_comp($mode, $cprop->[$ncomp], $sprop->[$ncomp]);
     }
     $kex->choose_kex($cprop->[PROPOSAL_KEX_ALGS], $sprop->[PROPOSAL_KEX_ALGS]);
@@ -208,8 +198,10 @@ sub choose_conf {
             if $need < $kex->{ciph}[$mode]->keysize;
         $need = $kex->{ciph}[$mode]->blocksize
             if $need < $kex->{ciph}[$mode]->blocksize;
-        $need = $kex->{mac}[$mode]->len
-            if $need < $kex->{mac}[$mode]->len;
+        if ($kex->{mac}[$mode]) {
+            $need = $kex->{mac}[$mode]->len
+                if $need < $kex->{mac}[$mode]->len;
+        }
     }
     $kex->{we_need} = $need;
 }
@@ -219,13 +211,18 @@ sub choose_kex {
     my $name = _get_match(@_);
     croak "No kex algorithm" unless $name;
     $kex->{algorithm} = $name;
-    if ($name eq KEX_DH1) {
-        $kex->{class_name} = __PACKAGE__ . "::DH1";
-    }
-    elsif ($name eq KEX_DH14) {
-        $kex->{class_name} = __PACKAGE__ . "::DH14";
-    }
-    else {
+    my %kexmap = (
+        &KEX_CURVE25519_SHA256 => 'C25519',
+        &KEX_DH_GEX_SHA256     => 'DHGEXSHA256',
+        &KEX_DH_GEX_SHA1       => 'DHGEXSHA1',
+        &KEX_DH14              => 'DH14',
+        &KEX_DH1               => 'DH1'
+    );
+    if (my $pkg = $kexmap{$name}) {
+        $kex->{ssh}->debug("Using $name for key exchange");
+        eval "use Net::SSH::Perl::Kex::$pkg";
+        $kex->{class_name} = __PACKAGE__ . '::' . $pkg;
+    } else {
         croak "Bad kex algorithm $name";
     }
 }
@@ -233,7 +230,8 @@ sub choose_kex {
 sub choose_hostkeyalg {
     my $kex = shift;
     my $name = _get_match(@_);
-    croak "No hostkey algorithm" unless $name;
+    croak "No hostkey algorithm! CLIENT: $_[0] SERVER $_[1]" unless $name;
+    $kex->{ssh}->debug("Host key algorithm: $name");
     $kex->{hostkeyalg} = $name;
 }
 
@@ -305,8 +303,6 @@ using RC4.
 
 The algorithm negotiation phase, as described above, includes
 negotiation for the key-exchange algorithm to be used.
-Currently, the only supported algorithm is Diffie-Hellman
-Group 1 key exchange, implemented in I<Net::SSH::Perl::Kex::DH1>.
 After algorithm negotiation, the Kex object is reblessed into
 the key exchange class (eg. 'Net::SSH::Perl::Kex::DH1'), and
 then the subclass's I<exchange> method is called to perform
@@ -323,5 +319,8 @@ algorithms.
 
 Please see the Net::SSH::Perl manpage for author, copyright,
 and license information.
+
+New key exchange mechanisms added by:
+Lance Kinley E<lkinley@loyaltymethods.com>
 
 =cut

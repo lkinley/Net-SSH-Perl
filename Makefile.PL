@@ -19,11 +19,13 @@ my %SSH_PREREQ = (
     },
 
     2 => {
-        'Digest::SHA1'      => '2.10',
+        'BSD::arc4random'   => '1.50',
+        'Digest::SHA'       => 0,
         'Digest::HMAC_MD5'  => 0,
-        'Digest::HMAC_SHA1' => 0,
+        'Crypt::Curve25519' => '0.04',
         'Crypt::DSA'        => '0.11',
         'Crypt::DH'         => '0.01',
+        'Crypt::Ed25519'    => '1.0',
         'Math::Pari'        => '2.001804',
         'MIME::Base64'      => 0,
         'Convert::PEM'      => '0.05',
@@ -60,6 +62,7 @@ my @cryptmod = (
     [ 'DES3', 'Crypt::DES' ],
     [ 'Blowfish', 'Crypt::Blowfish' ],
     [ 'RC4', '' ],
+    [ 'AES', 'Crypt::OpenSSL::AES' ],
 );
 
 print<<MSG;
