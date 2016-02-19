@@ -6,7 +6,7 @@ use strict;
 use Carp qw( croak );
 use IO::Select;
 use POSIX qw( :errno_h );
-use BSD::arc4random;
+use Crypt::PRNG qw( random_bytes );
 
 use Net::SSH::Perl;
 use Net::SSH::Perl::Constants qw(
@@ -351,7 +351,7 @@ sub send_ssh2 {
     my $len = $buffer->length + 4 + 1;
     my $padlen = $block_size - (($len - $aadlen) % $block_size);
     $padlen += $block_size if $padlen < 4;
-    my $junk = $ciph ? BSD::arc4random::arc4random_bytes($padlen) : ("\0" x $padlen);
+    my $junk = $ciph ? random_bytes($padlen) : ("\0" x $padlen);
     $buffer->append($junk);
 
     my $packet_len = $buffer->length + 1;
