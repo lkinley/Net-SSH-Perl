@@ -166,8 +166,8 @@ sub write_private {
         my $keylen = $cipher->keysize;
         my $ivlen = $cipher->ivlen;
         $rounds ||= DEFAULT_ROUNDS;
-        use BSD::arc4random;
-        my $salt = BSD::arc4random::arc4random_bytes(SALT_LEN);
+        use Crypt::PRNG qw( random_bytes );
+        my $salt = random_bytes(SALT_LEN);
 
         my $kdf = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
         $kdf->put_str($salt);

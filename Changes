@@ -1,5 +1,15 @@
 Revision history for Net::SSH::Perl
 
+2.01 2016.02.19
+
+    - Use CryptX to reduce module depedencies
+      This eliminates the need for:
+        BSD::arc4random
+        Digest::MD5
+        Digest::SHA
+        Digest::HMAC_MD5
+	Crypt::OpenSSL::AES
+
 2.00 2015.12.07
 
     - Add Chacha20-Poly1305 cipher support for best security
