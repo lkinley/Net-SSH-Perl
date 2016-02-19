@@ -47,14 +47,11 @@ sub etm { shift->{etm} }
 
 package Net::SSH::Perl::Mac::MD5;
 use strict;
-#use Digest::HMAC_MD5 qw( hmac_md5 );
-use Crypt::Mac::HMAC qw( hmac );
+use Crypt::Mac::HMAC;
 use vars qw( @ISA );
 @ISA = qw( Net::SSH::Perl::Mac );
 
 sub hmac {
-    #my $mac = shift;
-    #hmac_md5($_[0], $mac->{key});
     Crypt::Mac::HMAC::hmac('MD5', shift->{key}, shift);
 }
 
@@ -62,14 +59,11 @@ sub len { 16 }
 
 package Net::SSH::Perl::Mac::SHA1;
 use strict;
-#use Digest::SHA qw( hmac_sha1 );
-use Crypt::Mac::HMAC qw( hmac );
+use Crypt::Mac::HMAC;
 use vars qw( @ISA );
 @ISA = qw( Net::SSH::Perl::Mac );
 
 sub hmac {
-    #my $mac = shift;
-    #hmac_sha1($_[0], $mac->{key});
     Crypt::Mac::HMAC::hmac('SHA1', shift->{key}, shift);
 }
 
@@ -77,15 +71,11 @@ sub len { 20 }
 
 package Net::SSH::Perl::Mac::SHA2_256;
 use strict;
-#use Digest::SHA qw( hmac_sha256 );
-use Crypt::Mac::HMAC qw( hmac );
+use Crypt::Mac::HMAC;
 use vars qw( @ISA );
 @ISA = qw( Net::SSH::Perl::Mac );
 
 sub hmac {
-    #my $mac = shift;
-    #my $data = shift;
-    #hmac_sha256($data, $mac->{key});
     Crypt::Mac::HMAC::hmac('SHA256', shift->{key}, shift);
 }
 
@@ -93,15 +83,11 @@ sub len { 32 }
 
 package Net::SSH::Perl::Mac::SHA2_512;
 use strict;
-#use Digest::SHA qw( hmac_sha512 );
-use Crypt::Mac::HMAC qw( hmac );
+use Crypt::Mac::HMAC;
 use vars qw( @ISA );
 @ISA = qw( Net::SSH::Perl::Mac );
 
 sub hmac {
-    #my $mac = shift;
-    #my $data = shift;
-    #hmac_sha512($data, $mac->{key});
     Crypt::Mac::HMAC::hmac('SHA512', shift->{key}, shift);
 }
 
