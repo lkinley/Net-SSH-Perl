@@ -22,8 +22,8 @@ my $expected_enc = '0798d93ac9fab398125f83319f3db0d3632e7c8bf07735e2e432c5e92158
 my $one = chr(1) . "\0" x 7;
 
 my $c = Crypt::OpenSSH::ChachaPoly->new($key);
-$c->ivsetup(pack('Q',1),$one);
+$c->ivsetup($one,$one);
 my $encrypted = $c->encrypt($plaintext);
 ok($expected_enc eq unpack('H*',$encrypted), 'Encrypt');
-$c->ivsetup(pack('Q',1),$one);
+$c->ivsetup($one,$one);
 ok($c->decrypt($encrypted) eq $plaintext, "Decrypt");
