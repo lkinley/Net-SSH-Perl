@@ -257,7 +257,7 @@ sub verify {
 sub equal {
     my($keyA, $keyB) = @_;
     $keyA->{pub} && $keyB->{pub} &&
-    $keyA->{pub} == $keyB->{pub};
+    $keyA->{pub} eq $keyB->{pub};
 }
 
 sub as_blob {

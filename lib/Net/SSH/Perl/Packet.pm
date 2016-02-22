@@ -156,7 +156,8 @@ sub read_poll_ssh2 {
     my $ssh = shift;
     my $kex = $ssh->kex;
 
-    my($ciph, $mac, $comp, $authlen);
+    my($ciph, $mac, $comp);
+    my $authlen = 0;
     if ($kex) {
         $ciph = $kex->receive_cipher;
         $mac  = $kex->receive_mac;

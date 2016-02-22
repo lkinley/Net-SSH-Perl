@@ -48,14 +48,14 @@ sub encrypt {
     # run chacha20 once to generate poly1305 key
     # the iv is the packet sequence number
     $seqnr = $ciph->_seqnr_bytes($seqnr);
-    $ciph->{main}->ivsetup($seqnr,undef);
+    $ciph->{main}->ivsetup($seqnr,'');
     my $poly_key = "\0" x POLY1305_KEYLEN;
     $poly_key = $ciph->{main}->encrypt($poly_key);
 
     my $aadenc;
     if ($aadlen) {
         # encrypt packet length from first four bytes of data
-        $ciph->{header}->ivsetup($seqnr,undef);
+        $ciph->{header}->ivsetup($seqnr,'');
         $aadenc = $ciph->{header}->encrypt(substr($data,0,$aadlen));
     }
     
@@ -72,7 +72,7 @@ sub decrypt {
     # run chacha20 once to generate poly1305 key
     # the iv is the packet sequence number
     $seqnr = $ciph->_seqnr_bytes($seqnr);
-    $ciph->{main}->ivsetup($seqnr,undef);
+    $ciph->{main}->ivsetup($seqnr,'');
     my $poly_key = "\0" x POLY1305_KEYLEN;
     $poly_key = $ciph->{main}->encrypt($poly_key);
 
@@ -80,7 +80,7 @@ sub decrypt {
     if ($aadlen) {
         $datalen = unpack('N', $ciph->{length} ||
             eval {
-                $ciph->{header}->ivsetup($seqnr,undef);
+                $ciph->{header}->ivsetup($seqnr,'');
                 $ciph->{header}->decrypt(substr($data,0,$aadlen))
             });
     }
@@ -104,7 +104,7 @@ sub get_length {
 
     return if length($data) < AADLEN;
     $seqnr = $ciph->_seqnr_bytes($seqnr);
-    $ciph->{header}->ivsetup($seqnr,undef);
+    $ciph->{header}->ivsetup($seqnr,'');
     # save it so we do not have to decrypt again later in decrypt()
     $ciph->{length} = $ciph->{header}->decrypt(substr($data,0,AADLEN));
 }
