@@ -19,6 +19,7 @@ use Carp qw( croak );
     CompressionLevel        => [ \&_set_str, 'compression_level' ],
     DSAAuthentication       => [ \&_set_yesno, 'auth_dsa' ],
     GlobalKnownHostsFile    => [ \&_set_str, 'global_known_hosts' ],
+    HashKnownHosts          => [ \&_set_yesno, 'hash_known_hosts' ],
     HostKeyAlgorithms       => [ \&_set_str, 'host_key_algorithms' ],
     HostName                => [ \&_set_str, 'hostname' ],
     IdentityFile            => [ \&_identity_file ],

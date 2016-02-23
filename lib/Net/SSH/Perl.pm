@@ -238,14 +238,14 @@ sub _create_socket {
     my $ssh = shift;
     my $sock = gensym;
 
-	my ($p,$end,$delta) = (0,1,1); # normally we use whatever port we can get
-   	   ($p,$end,$delta) = (1023,512,-1) if $ssh->{config}->get('privileged');
+    my ($p,$end,$delta) = (0,1,1); # normally we use whatever port we can get
+          ($p,$end,$delta) = (1023,512,-1) if $ssh->{config}->get('privileged');
 
-	# allow an explicit bind address
+    # allow an explicit bind address
     my $addr = $ssh->{config}->get('bind_address');
-	$addr = inet_aton($addr) if $addr;
-	($p,$end,$delta) = (10000,65535,1) if $addr and not $p;
-	$addr ||= INADDR_ANY;
+    $addr = inet_aton($addr) if $addr;
+    ($p,$end,$delta) = (10000,65535,1) if $addr and not $p;
+    $addr ||= INADDR_ANY;
 
     for(; $p != $end; $p += $delta) {
         socket($sock, AF_INET, SOCK_STREAM, getprotobyname('tcp') || 0) ||
@@ -258,10 +258,10 @@ sub _create_socket {
         }
         croak "Net::SSH: Can't bind socket to port $p: $!";
     }
-	if($p) {
-		$ssh->debug("Allocated local port $p.");
-		$ssh->{config}->set('localport', $p);
-	}
+    if($p) {
+        $ssh->debug("Allocated local port $p.");
+        $ssh->{config}->set('localport', $p);
+    }
 
     $sock;
 }
@@ -403,6 +403,12 @@ sub check_host_key {
     $host ||= $ssh->{host};
     $u_hostfile ||= $ssh->{config}->get('user_known_hosts');
     $s_hostfile ||= $ssh->{config}->get('global_known_hosts');
+    my $port = $ssh->{config}->get('port');
+    if ($port =~ /\D/) {
+        my @serv = getservbyname(my $serv = $port, 'tcp');
+        $port = $serv[2];
+    }
+    $host = "[$host]:$port" if defined $port && $port != 22;
 
     my $status = _check_host_in_hostfile($host, $u_hostfile, $key);
     unless (defined $status && ($status == HOST_OK || $status == HOST_CHANGED)) {
@@ -426,7 +432,7 @@ Are you sure you want to continue connecting (yes/no)?);
             }
         }
         $ssh->debug("Permanently added '$host' to the list of known hosts.");
-        _add_host_to_hostfile($host, $u_hostfile, $key);
+        _add_host_to_hostfile($host, $u_hostfile, $key, $ssh->{config}->get('hash_known_hosts'));
     }
     else {
         croak "Host key for '$host' has changed!";

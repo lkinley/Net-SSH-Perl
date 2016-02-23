@@ -29,7 +29,7 @@ SHA1 44ce715b8029f44123388bbc0fe50cea4334dc79 eg/pssh
 SHA1 3a7ecc57b316a02a72f8f56602b6d59aa4a4c2ce eg/pssh-keygen
 SHA1 c36af8adc7bcc9ccbef3beed15723a4a0e8db15a eg/remoteinteract.pl
 SHA1 7ff227ceb0c28c8f98b5772072eb6bf908f96555 eg/remoteinteract2.pl
-SHA1 a06b6522a6a0899ba8d4a5b0e2d9426a663fbe5e lib/Net/SSH/Perl.pm
+SHA1 709a727ca2d84b805ee7cf37b92d3231fc913cb1 lib/Net/SSH/Perl.pm
 SHA1 839a821af6043d4a7b95ca6b535259615c0e04bd lib/Net/SSH/Perl/Agent.pm
 SHA1 fcaf17a31c625344a591f0fd42a033ebbcbd31b4 lib/Net/SSH/Perl/Auth.pm
 SHA1 9b539c1489f9cc3d3f6dcb8281f4af3fdf3ba52f lib/Net/SSH/Perl/Auth/ChallengeResponse.pm
@@ -64,7 +64,7 @@ SHA1 acbce1077fafd013464ab0bd09fb7e662efaef4d lib/Net/SSH/Perl/Cipher/IDEA.pm
 SHA1 21344b8bd2cb9ba9c5cd0f522ee3dd28c503407e lib/Net/SSH/Perl/Cipher/RC4.pm
 SHA1 a83a82f4225f9c3c3fb1d2ce987c5b26c4840430 lib/Net/SSH/Perl/Comp.pm
 SHA1 e82ab42ea92f64bbe5773fb953a58cf967167682 lib/Net/SSH/Perl/Comp/Zlib.pm
-SHA1 7a82ec53614b8907d68adca4ebed69fd65023918 lib/Net/SSH/Perl/Config.pm
+SHA1 d87798d5b538ff191dab7e6ba07ad722f34f3761 lib/Net/SSH/Perl/Config.pm
 SHA1 3a0c34cc8bb9add314700b2083c0af402231f1de lib/Net/SSH/Perl/Constants.pm
 SHA1 b1ee21fcdfbf4e94eadf36e9e2d95f6a01f73732 lib/Net/SSH/Perl/Handle.pm
 SHA1 9e80b0602ed189e37f8728a08419a5ca99f9f30a lib/Net/SSH/Perl/Handle/SSH1.pm
@@ -91,7 +91,7 @@ SHA1 eeed6b1ec159761bf772a298c23e45def36853f5 lib/Net/SSH/Perl/Subsystem/Client.
 SHA1 696e872f51fb3897fa2437b7be4f9b77ad22f706 lib/Net/SSH/Perl/Subsystem/Server.pm
 SHA1 8140e0ef8c5612ea370db1cd4526588daa24f9b8 lib/Net/SSH/Perl/Util.pm
 SHA1 f755e3f861aeaf9adb2bd4eea9e4543c88f92d19 lib/Net/SSH/Perl/Util/Authfile.pm
-SHA1 08a2b76dbe4e1fde92623e3b3d5776ff2e3d9536 lib/Net/SSH/Perl/Util/Hosts.pm
+SHA1 1723c5013a66baafddbc3b25862cd13fb755c5f7 lib/Net/SSH/Perl/Util/Hosts.pm
 SHA1 4a631d99799ca33b2186365e0718fa86d390fd64 lib/Net/SSH/Perl/Util/RSA.pm
 SHA1 c539f02554917a5377438d2c6b23ff7b2ea04022 lib/Net/SSH/Perl/Util/SSH1MP.pm
 SHA1 428908846951998f302ef1f77115bd8c436ecac0 lib/Net/SSH/Perl/Util/SSH1Misc.pm
@@ -116,11 +116,11 @@ SHA1 9b7aa51c0e3a2fede4a7b4767c3d507f37f46696 t/test-common.pl
 -----BEGIN PGP SIGNATURE-----
 Comment: GPGTools - http://gpgtools.org
 
-iQEcBAEBCAAGBQJWy4hHAAoJEC3vSbXAsR2+z8sH/R7HOzeGlXVnyZg4YjgbtRIK
-FgeSyHoSzFpo5kG4ZCr8v4AF5a1AEUYAv/VBtyBUskq3mq8QUVHqsMgwLUMBI6zO
-FXJsL8Jbeldwtbh1apmSWGubba02DO0tul/A+zIyY0CO1zhFxwhTVQscUDumKffW
-HLDSyhCsXiBFTyatcVr592rFLdQUEiJu0W8ivTEZkmPc9MkA5ybv1QquDmYUMM2a
-mcJlrw2YLMobWiP9ud2i5ZW0FpXRZmd52DC6WViHDaPg94ZoaQ+ErwgX8/gJUwe+
-jGpFs2rM41lUb4im4Cw9xdRtvSHpHlF91fAlJPvn7Slxg+49X0Et0TxBZhbyXh4=
-=Tlfq
+iQEcBAEBCAAGBQJWy6sBAAoJEC3vSbXAsR2+rbEIAJet3Kl3IyP5p4hhUtHpW3gO
+35tZtdaNNCV8cMyfClIGzqPcqrAQvj+MXLMTWjRGWAM6AmpPNDYIJCWQ7/EXYkWW
++ZCNfn1N4WeO7RrQu3R6stobNHxk+qkxXCgsoLAeEvqL5FPghCwzc0VL6CBZrX0y
+b/AfWVJ6fDrTDe1kmyY2u+lVk0A3XXH22JC+peTtViB8+LMXFnHYkKCvl9CSdXHo
+oobYeSlpKEOlRHzzCYfS9QDkg9/p8RcxhKoPaCvJ/rf+FCcvRiugNuE77eI8UuuW
+mmsqf2AxF+e1cGKEH/PicTiPR7vU0+PL1ziTYhGI/prWdK+Mo9/+kbzebaZ6MY4=
+=AzIw
 -----END PGP SIGNATURE-----
