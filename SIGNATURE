@@ -29,7 +29,7 @@ SHA1 44ce715b8029f44123388bbc0fe50cea4334dc79 eg/pssh
 SHA1 3a7ecc57b316a02a72f8f56602b6d59aa4a4c2ce eg/pssh-keygen
 SHA1 c36af8adc7bcc9ccbef3beed15723a4a0e8db15a eg/remoteinteract.pl
 SHA1 7ff227ceb0c28c8f98b5772072eb6bf908f96555 eg/remoteinteract2.pl
-SHA1 709a727ca2d84b805ee7cf37b92d3231fc913cb1 lib/Net/SSH/Perl.pm
+SHA1 b8f67708c8d31edd4abbf1bace7f0d8e60ac58b1 lib/Net/SSH/Perl.pm
 SHA1 839a821af6043d4a7b95ca6b535259615c0e04bd lib/Net/SSH/Perl/Agent.pm
 SHA1 fcaf17a31c625344a591f0fd42a033ebbcbd31b4 lib/Net/SSH/Perl/Auth.pm
 SHA1 9b539c1489f9cc3d3f6dcb8281f4af3fdf3ba52f lib/Net/SSH/Perl/Auth/ChallengeResponse.pm
@@ -57,19 +57,19 @@ SHA1 56a194cac2df9c8001b77863412d93a9c93bcb6e lib/Net/SSH/Perl/Cipher/Blowfish.p
 SHA1 56d3dab8b4c0c457f1573fd4da1542470c285a0d lib/Net/SSH/Perl/Cipher/CBC.pm
 SHA1 ece9cb5da749a60c6ab0c3a4ec2c1e0bde25c733 lib/Net/SSH/Perl/Cipher/CFB.pm
 SHA1 a54a62d70a2d67bcd908d1b30632e482fd7c965f lib/Net/SSH/Perl/Cipher/CTR.pm
-SHA1 9a0000cc12575fb53a6804c375c91f0ddc0a0082 lib/Net/SSH/Perl/Cipher/ChachaPoly.pm
+SHA1 d6472848764f049ff098c15324eeb2fbc3d23567 lib/Net/SSH/Perl/Cipher/ChachaPoly.pm
 SHA1 3ef41c9cd1c7a09168665dbfd223bce46d7e1fa1 lib/Net/SSH/Perl/Cipher/DES.pm
 SHA1 936c621c94d1372d3c3b4f61a2f4401c4ff8c5bb lib/Net/SSH/Perl/Cipher/DES3.pm
 SHA1 acbce1077fafd013464ab0bd09fb7e662efaef4d lib/Net/SSH/Perl/Cipher/IDEA.pm
 SHA1 21344b8bd2cb9ba9c5cd0f522ee3dd28c503407e lib/Net/SSH/Perl/Cipher/RC4.pm
 SHA1 a83a82f4225f9c3c3fb1d2ce987c5b26c4840430 lib/Net/SSH/Perl/Comp.pm
 SHA1 e82ab42ea92f64bbe5773fb953a58cf967167682 lib/Net/SSH/Perl/Comp/Zlib.pm
-SHA1 d87798d5b538ff191dab7e6ba07ad722f34f3761 lib/Net/SSH/Perl/Config.pm
-SHA1 3a0c34cc8bb9add314700b2083c0af402231f1de lib/Net/SSH/Perl/Constants.pm
+SHA1 12d281a76059f2c4133865504e41025286c9e022 lib/Net/SSH/Perl/Config.pm
+SHA1 085fb7a34ae5b0dbeb57529df67c68010013c180 lib/Net/SSH/Perl/Constants.pm
 SHA1 b1ee21fcdfbf4e94eadf36e9e2d95f6a01f73732 lib/Net/SSH/Perl/Handle.pm
 SHA1 9e80b0602ed189e37f8728a08419a5ca99f9f30a lib/Net/SSH/Perl/Handle/SSH1.pm
 SHA1 999d57d14d7b8ebbbf6f882f9456518f69dd468f lib/Net/SSH/Perl/Handle/SSH2.pm
-SHA1 0b7e9c77ab4117efc7a15417104b298cc644a4eb lib/Net/SSH/Perl/Kex.pm
+SHA1 34a4ba142aa3f22a01cf1e625720228fa98d391b lib/Net/SSH/Perl/Kex.pm
 SHA1 2a4756bdc08acab437bd2ac476e1cd2a9396a75f lib/Net/SSH/Perl/Kex/C25519.pm
 SHA1 17bbe03e65f5e9ed106291c149381f9731644c02 lib/Net/SSH/Perl/Kex/DH.pm
 SHA1 0c95f7b9535d5595b62a771708367245a5ab9cb9 lib/Net/SSH/Perl/Kex/DH1.pm
@@ -79,7 +79,7 @@ SHA1 c8b50e437c4dbe9516902d46025086d0d174ae85 lib/Net/SSH/Perl/Kex/DHGEXSHA1.pm
 SHA1 138767e970149de786eb64eb6ace5afbbff91029 lib/Net/SSH/Perl/Kex/DHGEXSHA256.pm
 SHA1 239de1e8fa1676e48119d6222621eb7200fadb9e lib/Net/SSH/Perl/Key.pm
 SHA1 3e148fa03452cf80abc0650a270ff89562631327 lib/Net/SSH/Perl/Key/DSA.pm
-SHA1 33a3927442fe0fbbb9fa182971602854b3342742 lib/Net/SSH/Perl/Key/Ed25519.pm
+SHA1 b42be5ec7f6a1b5e6a10d67eb6328bff94032056 lib/Net/SSH/Perl/Key/Ed25519.pm
 SHA1 1ea71b00b0ae2e62eaeb73bf976582a21d16884b lib/Net/SSH/Perl/Key/RSA.pm
 SHA1 ba45cd950b22a2b388b111752b58c207034cdcb7 lib/Net/SSH/Perl/Key/RSA1.pm
 SHA1 23b05df245f17438ed4c206a033302415715e720 lib/Net/SSH/Perl/Mac.pm
@@ -116,11 +116,11 @@ SHA1 9b7aa51c0e3a2fede4a7b4767c3d507f37f46696 t/test-common.pl
 -----BEGIN PGP SIGNATURE-----
 Comment: GPGTools - http://gpgtools.org
 
-iQEcBAEBCAAGBQJWy6sBAAoJEC3vSbXAsR2+rbEIAJet3Kl3IyP5p4hhUtHpW3gO
-35tZtdaNNCV8cMyfClIGzqPcqrAQvj+MXLMTWjRGWAM6AmpPNDYIJCWQ7/EXYkWW
-+ZCNfn1N4WeO7RrQu3R6stobNHxk+qkxXCgsoLAeEvqL5FPghCwzc0VL6CBZrX0y
-b/AfWVJ6fDrTDe1kmyY2u+lVk0A3XXH22JC+peTtViB8+LMXFnHYkKCvl9CSdXHo
-oobYeSlpKEOlRHzzCYfS9QDkg9/p8RcxhKoPaCvJ/rf+FCcvRiugNuE77eI8UuuW
-mmsqf2AxF+e1cGKEH/PicTiPR7vU0+PL1ziTYhGI/prWdK+Mo9/+kbzebaZ6MY4=
-=AzIw
+iQEcBAEBCAAGBQJWzLcUAAoJEC3vSbXAsR2+rKcH/0n3rwcxk/CTr8IL+AiAeWfE
+Q4f0BF/GORgjb8zqEtuLGJjH27dY/k01tAfhXXAErPsldd+udE5LHEuZ7X1t0q3Z
+3VszAnrJGMRUy+qlf3BCLG60hcHRl1z7g64FT9TCqpORLeP8fzqwJNzCi32JMbxs
+5j4nO9rkUlUXny0YFs2IQFbeqSUjIzlNYKEmYJjNqdxx5CAHa1ZftNI3SSDxc5G7
+Af0zTuk7S5/oJAO8GllcH0NZYETIhiOYczBuSOWT54jMr1GhGEv92zqgnBKxwgxn
+4SVVEcQO3SklLrw1rpDhpANivsySpNEboKGUjn8yznLdBLGgY3cJLpOqLzChwSE=
+=Uy8i
 -----END PGP SIGNATURE-----

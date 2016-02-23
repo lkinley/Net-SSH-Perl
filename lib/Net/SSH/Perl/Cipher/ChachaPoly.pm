@@ -37,8 +37,7 @@ sub init {
 
 sub _seqnr_bytes {
     my ($ciph, $seqnr) = @_;
-    my $seq; $seq .= pack('W',$seqnr >> 8*(8-$_)) foreach (1..8);
-    $seq;
+    pack('N',0) . pack('N',$seqnr); # seqnr is only 32-bit
 }
 
 sub encrypt {

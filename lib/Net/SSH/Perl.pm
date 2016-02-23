@@ -404,7 +404,7 @@ sub check_host_key {
     $u_hostfile ||= $ssh->{config}->get('user_known_hosts');
     $s_hostfile ||= $ssh->{config}->get('global_known_hosts');
     my $port = $ssh->{config}->get('port');
-    if ($port =~ /\D/) {
+    if (defined $port && $port =~ /\D/) {
         my @serv = getservbyname(my $serv = $port, 'tcp');
         $port = $serv[2];
     }

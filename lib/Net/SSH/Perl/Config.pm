@@ -132,7 +132,7 @@ sub _set_str {
         none     => 'None',
         des      => 'DES',
         '3des'   => 'DES3',
-        arcfour  => 'ARCFOUR',
+        arcfour  => 'RC4',
         blowfish => 'Blowfish',
     );
 

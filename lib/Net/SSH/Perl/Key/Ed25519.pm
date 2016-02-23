@@ -225,8 +225,12 @@ sub write_private {
     close FH;
 }
 
-sub dump_public { $_[0]->ssh_name . ' ' . encode_base64( $_[0]->as_blob, '') .
-                  ' ' . $_[0]->{comment} }
+sub dump_public {
+    my $key = shift;
+    my $pub = $key->ssh_name . ' ' . encode_base64( $key->as_blob, '');
+    $pub .= ' ' . $key->{comment} if defined $key->{comment};
+    $pub
+}
 
 sub sign {
     my $key = shift;

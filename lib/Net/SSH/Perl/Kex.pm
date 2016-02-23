@@ -141,7 +141,7 @@ sub exchange_kexinit {
         $packet = $received_packet;
     }
     else {
-        $ssh->debug("Sent key-exchange init (KEXINIT), wait response.");
+        $ssh->debug("Sent key-exchange init (KEXINIT), waiting for response.");
         $packet = Net::SSH::Perl::Packet->read_expect($ssh, SSH2_MSG_KEXINIT);
     }
     $kex->{server_kexinit} = $packet->data;
