@@ -209,6 +209,18 @@ sub get_bignum2_bytes {
     return $num;
 }
 
+sub get_raw_bignum {
+    my $buf = shift;
+
+    my $num = $buf->get_str;
+    my $len = CORE::length($num);
+    return unless $len;
+    # refuse negative (MSB set) bignums
+    return if ord(substr($num,0,1)) & 0x80;
+    substr($num,0,1,'') while ord(substr($num,0,1)) == 0;
+    return $num;
+}
+
 1;
 __END__
 
