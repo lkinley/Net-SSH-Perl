@@ -66,7 +66,6 @@ sub read_private {
     my $key = __PACKAGE__->new(undef, $datafellows);
     $key->{rsa_priv}->import_key($key_file, $passphrase);
     $key->_pub_from_private;
-
     $key;
 }
 
@@ -114,8 +113,10 @@ sub verify {
 
 sub equal {
     my($keyA, $keyB) = @_;
-    my $hashA = defined $keyA->{rsa_pub} && $keyA->{rsa_pub}->key2hash or return;
-    my $hashB = defined $keyB->{rsa_pub} && $keyB->{rsa_pub}->key2hash or return;
+
+    return unless $keyA->{rsa_pub} && $keyB->{rsa_pub};
+    my $hashA = eval { $keyA->{rsa_pub}->key2hash } or return;
+    my $hashB = eval { $keyB->{rsa_pub}->key2hash } or return;
 
     return $hashA->{e} eq $hashB->{e} &&
            $hashA->{N} eq $hashB->{N};

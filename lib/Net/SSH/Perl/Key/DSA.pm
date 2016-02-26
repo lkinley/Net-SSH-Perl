@@ -12,11 +12,8 @@ use Net::SSH::Perl::Key;
 use base qw( Net::SSH::Perl::Key );
 
 use MIME::Base64;
-use Crypt::DSA;
-use Crypt::DSA::Key;
-use Crypt::DSA::Signature;
+use Crypt::PK::DSA;
 use Carp qw( croak );
-use Digest::SHA qw( sha1 );
 
 use constant INTBLOB_LEN => 20;
 
@@ -24,7 +21,7 @@ sub ssh_name { 'ssh-dss' }
 
 sub init {
     my $key = shift;
-    $key->{dsa} = Crypt::DSA::Key->new;
+    $key->{dsa} = Crypt::PK::DSA->new;
 
     my($blob, $datafellows) = @_;
 
@@ -34,11 +31,8 @@ sub init {
         my $ktype = $b->get_str;
         croak __PACKAGE__, "->init: cannot handle type '$ktype'"
             unless $ktype eq $key->ssh_name;
-        my $dsa = $key->{dsa};
-        $dsa->p( $b->get_mp_int );
-        $dsa->q( $b->get_mp_int );
-        $dsa->g( $b->get_mp_int );
-        $dsa->pub_key( $b->get_mp_int );
+        my $pubkey = $key->ssh_name . ' ' . encode_base64($b->bytes,'');
+        $key->{dsa}->import_key( \$pubkey );
     }
 
     if ($datafellows) {
@@ -49,27 +43,21 @@ sub init {
 sub keygen {
     my $class = shift;
     my($bits, $datafellows) = @_;
-    my $dsa = Crypt::DSA->new;
-    my $key = $class->new(undef, $datafellows);
-    $key->{dsa} = $dsa->keygen(Size => $bits, Verbosity => 1);
+    my $key = __PACKAGE__->new(undef, $datafellows);
+    $key->{dsa} = Crypt::PK::DSA->new;
+    $key->{dsa}->generate_key($bits/8);
     $key;
 }
 
-sub size { $_[0]->{dsa}->size }
+sub size { eval { $_[0]->{dsa}->key2hash->{size} * 8 } }
 
 sub read_private {
     my $class = shift;
     my($key_file, $passphrase, $datafellows, $keytype) = @_;
     $keytype ||= 'PEM';
 
-    my $key = $class->new(undef, $datafellows);
-    $key->{dsa} = Crypt::DSA::Key->new(
-                     Filename => $key_file,
-                     Type     => $keytype,
-                     Password => $passphrase
-            );
-    return unless $key->{dsa};
-
+    my $key = __PACKAGE__->new(undef, $datafellows);
+    $key->{dsa}->import_key($key_file, $passphrase);
     $key;
 }
 
@@ -77,11 +65,10 @@ sub write_private {
     my $key = shift;
     my($key_file, $passphrase) = @_;
 
-    $key->{dsa}->write(
-                    Filename => $key_file,
-                    Type     => 'PEM',
-                    Password => $passphrase
-            );
+    my $pem = $key->{dsa}->export_key_pem('private', $passphrase) or return;
+    open my $fh, '>', $key_file or croak "Can't write to $key_file: $!";
+    print $fh $pem;
+    close $fh or croak "Can't close $key_file: $!";
 }
 
 sub dump_public { $_[0]->ssh_name . ' ' . encode_base64( $_[0]->as_blob, '' ) }
@@ -89,21 +76,28 @@ sub dump_public { $_[0]->ssh_name . ' ' . encode_base64( $_[0]->as_blob, '' ) }
 sub sign {
     my $key = shift;
     my($data) = @_;
-    my $dsa = Crypt::DSA->new;
-    my $sig = $dsa->sign(Digest => sha1($data), Key => $key->{dsa});
-    my $sigblob = '';
-    $sigblob .= mp2bin($sig->r, INTBLOB_LEN);
-    $sigblob .= mp2bin($sig->s, INTBLOB_LEN);
+    my $dersig = $key->{dsa}->sign_message($data); # returns a DER ASN.1 formatted r,s
+    # decode DER ASN.1 signature
+    return unless ord(substr($dersig,0,1,'')) == 48; # type SEQUENCE
+    my $derlen = ord(substr($dersig,0,1,''));
+    return unless ord(substr($dersig,0,1,'')) == 2; # Type INTEGER
+    my $intlen = ord(substr($dersig,0,1,''));
+    my $r = substr($dersig,0,$intlen,'');
+    return unless ord(substr($dersig,0,1,'')) == 2; # Type INTEGER
+    $intlen = ord(substr($dersig,0,1,''));
+    my $s = substr($dersig,0,$intlen,'');
+
+    $r = "\0" x (INTBLOB_LEN-length($r)) . $r;
+    $s = "\0" x (INTBLOB_LEN-length($s)) . $s;
+    my $sigblob = $r . $s;
 
     if ($key->{datafellows} && ${$key->{datafellows}} & SSH_COMPAT_BUG_SIGBLOB) {
         return $sigblob;
     }
-    else {
-        my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
-        $b->put_str($key->ssh_name);
-        $b->put_str($sigblob);
-        $b->bytes;
-    }
+    my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+    $b->put_str($key->ssh_name);
+    $b->put_str($sigblob);
+    $b->bytes;
 }
 
 sub verify {
@@ -121,33 +115,38 @@ sub verify {
         croak "Can't verify type ", $ktype unless $ktype eq $key->ssh_name;
         $sigblob = $b->get_str;
     }
+    # convert to ASN.1 DER format
+    my $r = substr($sigblob,0,INTBLOB_LEN);
+    my $s = substr($sigblob,INTBLOB_LEN);
+    my $ints = chr(2) . chr(length($r)) . $r .
+               chr(2) . chr(length($s)) . $s;
+    my $dersig = chr(48) . chr(length($ints)) . $ints;
 
-    my $sig = Crypt::DSA::Signature->new;
-    $sig->r( bin2mp(substr $sigblob, 0, INTBLOB_LEN) );
-    $sig->s( bin2mp(substr $sigblob, INTBLOB_LEN) );
-
-    my $digest = sha1($data);
-    my $dsa = Crypt::DSA->new;
-    $dsa->verify( Key => $key->{dsa}, Digest => $digest, Signature => $sig );
+    $key->{dsa}->verify_message($dersig, $data);
 }
 
 sub equal {
     my($keyA, $keyB) = @_;
-    $keyA->{dsa} && $keyB->{dsa} &&
-    $keyA->{dsa}->p == $keyB->{dsa}->p &&
-    $keyA->{dsa}->q == $keyB->{dsa}->q &&
-    $keyA->{dsa}->g == $keyB->{dsa}->g &&
-    $keyA->{dsa}->pub_key == $keyB->{dsa}->pub_key;
+
+    return unless $keyA->{dsa} && $keyB->{dsa};
+    my $hashA = eval { $keyA->{dsa}->key2hash } or return;
+    my $hashB = eval { $keyB->{dsa}->key2hash } or return;
+
+    return $hashA->{p} eq $hashB->{p} &&
+           $hashA->{q} eq $hashB->{q} &&
+           $hashA->{g} eq $hashB->{g} &&
+           $hashA->{y} eq $hashB->{y};
 }
 
 sub as_blob {
     my $key = shift;
     my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+    my $hash = $key->{dsa}->key2hash or return;
     $b->put_str($key->ssh_name);
-    $b->put_mp_int($key->{dsa}->p);
-    $b->put_mp_int($key->{dsa}->q);
-    $b->put_mp_int($key->{dsa}->g);
-    $b->put_mp_int($key->{dsa}->pub_key);
+    $b->put_bignum2_bytes(pack('H*',$hash->{p}));
+    $b->put_bignum2_bytes(pack('H*',$hash->{q}));
+    $b->put_bignum2_bytes(pack('H*',$hash->{g}));
+    $b->put_bignum2_bytes(pack('H*',$hash->{y}));
     $b->bytes;
 }
 
