@@ -152,7 +152,7 @@ Net::SSH::Perl::Key::RSA - RSA key object
 I<Net::SSH::Perl::Key::RSA> subclasses I<Net::SSH::Perl::Key>
 to implement a key object, SSH style. This object provides all
 of the methods needed for a RSA key object; the underlying
-implementation is provided by I<Crypt::RSA>, and this class
+implementation is provided by I<Crypt::PK::RSA>, and this class
 wraps around that module to provide SSH-specific functionality
 (eg. taking in a I<Net::SSH::Perl::Buffer> blob and transforming
 it into a key object).
@@ -165,8 +165,8 @@ additions are described here.
 
 =head2 $key->sign($data)
 
-Wraps around I<Crypt::RSA::SS::PKCS1v15::sign> to sign I<$data>
-using the private key portions of I<$key>, then encodes that
+Uses I<Crypt::PK::RSA> (CryptX module) to sign I<$data>
+using the private key portion of I<$key>, then encodes that
 signature into an SSH-compatible signature blob.
 
 Returns the signature blob.
@@ -175,8 +175,8 @@ Returns the signature blob.
 
 Given a signature blob I<$signature> and the original signed data
 I<$data>, attempts to verify the signature using the public key
-portion of I<$key>. This wraps around
-I<Crypt::RSA::SS::PKCS1v15::verify> to perform the core verification.
+portion of I<$key>. This uses I<Crypt::PK::RSA::verify_message>
+to perform the core verification.
 
 I<$signature> should be an SSH-compatible signature blob, as
 returned from I<sign>; I<$data> should be a string of data, as

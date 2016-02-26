@@ -169,7 +169,7 @@ Net::SSH::Perl::Key::DSA - DSA key object
 I<Net::SSH::Perl::Key::DSA> subclasses I<Net::SSH::Perl::Key>
 to implement a key object, SSH style. This object provides all
 of the methods needed for a DSA key object; the underlying
-implementation is provided by I<Crypt::DSA>, and this class
+implementation is provided by I<Crypt::PK::DSA>, and this class
 wraps around that module to provide SSH-specific functionality
 (eg. taking in a I<Net::SSH::Perl::Buffer> blob and transforming
 it into a key object).
@@ -182,18 +182,22 @@ additions are described here.
 
 =head2 $key->sign($data)
 
-Wraps around I<Crypt::DSA::sign> to sign I<$data> using the private
-key portions of I<$key>, then encodes that signature into an
-SSH-compatible signature blob.
+Wraps around I<Crypt::PK::DSA::sign_message> to sign I<$data> using
+the key I<$key>, then encodes that signature into an SSH-compatible
+signature blob.  The output of I<Crypt::PK::DSA::sign_message> is a
+DER ASN.1 binary structure, so that must be decoded to extract the
+components of the signature.
 
 Returns the signature blob.
 
 =head2 $key->verify($signature, $data)
 
 Given a signature blob I<$signature> and the original signed data
-I<$data>, attempts to verify the signature using the public key
-portion of I<$key>. This wraps around I<Crypt::DSA::verify> to
-perform the core verification.
+I<$data>, attempts to verify the signature using the key I<$key>.
+This wraps around I<Crypt::PK::DSA::verify_message> to perform the
+core verification.  Since I<Crypt::PK::DSA::verify_message> requires
+a signature in DER ASN.1 format, the signature is reconfigured to
+that before being passed.
 
 I<$signature> should be an SSH-compatible signature blob, as
 returned from I<sign>; I<$data> should be a string of data, as
