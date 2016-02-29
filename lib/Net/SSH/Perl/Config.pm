@@ -23,6 +23,8 @@ use Carp qw( croak );
     HostKeyAlgorithms       => [ \&_set_str, 'host_key_algorithms' ],
     HostName                => [ \&_set_str, 'hostname' ],
     IdentityFile            => [ \&_identity_file ],
+    KexAlgorithms           => [ \&_set_str, 'kex_algorithms' ],
+    MACs                    => [ \&_set_str, 'macs' ],
     NumberOfPasswordPrompts => [ \&_set_str, 'number_of_password_prompts' ],
     PasswordAuthentication  => [ \&_set_yesno, 'auth_password' ],
     PasswordPromptHost      => [ \&_set_yesno, 'password_prompt_host' ],

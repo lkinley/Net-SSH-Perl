@@ -81,9 +81,15 @@ sub exchange {
         $proposal[ PROPOSAL_COMP_ALGS_CTOS ] =
         $proposal[ PROPOSAL_COMP_ALGS_STOC ] = "none";
     }
-    if ($ssh->config->get('host_key_algorithms')) {
-        $proposal[ PROPOSAL_SERVER_HOST_KEY_ALGS ] =
-            $ssh->config->get('host_key_algorithms');
+    if (my $algos = $ssh->config->get('host_key_algorithms')) {
+        $proposal[ PROPOSAL_SERVER_HOST_KEY_ALGS ] = $algos;
+    }
+    if (my $algos = $ssh->config->get('kex_algorithms')) {
+        $proposal[ PROPOSAL_KEX_ALGS ] = $algos;
+    }
+    if (my $macs = $ssh->config->get('macs')) {
+        $proposal[ PROPOSAL_MAC_ALGS_CTOS ] = 
+        $proposal[ PROPOSAL_MAC_ALGS_STOC ] = $macs;
     }
 
     $kex->{client_kexinit} = $kex->kexinit(\@proposal);

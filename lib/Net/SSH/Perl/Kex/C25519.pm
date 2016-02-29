@@ -7,7 +7,6 @@ use Net::SSH::Perl::Constants qw( :msg2 :kex );
 use Net::SSH::Perl::Key;
 
 use Carp qw( croak );
-use Crypt::DH;
 use Crypt::Digest::SHA256 qw( sha256 );
 use Scalar::Util qw(weaken);
 use Crypt::PRNG qw( random_bytes );
