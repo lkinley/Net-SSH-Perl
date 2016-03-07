@@ -5,7 +5,6 @@ use 5.006;
 use ExtUtils::MakeMaker qw(prompt WriteMakefile);
 
 my %prereq = (
-        'Digest::MD5'       => 0,
         'IO::Socket'        => 0,
         'File::Spec'        => 0,
         'File::HomeDir'     => 0,
@@ -13,17 +12,16 @@ my %prereq = (
 
 my %SSH_PREREQ = (
     1 => {
+        'Digest::MD5'       => 0,
         'String::CRC32'     => '1.2',
         'Math::GMP'         => '1.04',
         'Scalar::Util'      => 0,
     },
 
     2 => {
-        'CryptX'            => '0.26',
-        'Crypt::Curve25519' => '0.04',
-        'Crypt::DSA'        => '0.11',
+        'CryptX'            => 0,
+        'Crypt::Curve25519' => '0.05',
         'Crypt::DH'         => '0.01',
-        'Crypt::Ed25519'    => '1.0',
         'Math::Pari'        => '2.001804',
         'MIME::Base64'      => 0,
         'Convert::PEM'      => '0.05',
@@ -54,36 +52,6 @@ print "\n";
 
 @prereq{keys %{$SSH_PREREQ{$p}}} = values %{$SSH_PREREQ{$p}};
 
-my @cryptmod = (
-    [ 'IDEA', 'Crypt::IDEA' ],
-    [ 'DES','Crypt::DES' ],
-    [ 'DES3', 'Crypt::DES' ],
-    [ 'Blowfish', 'Crypt::Blowfish' ],
-    [ 'RC4', '' ],
-    [ 'AES', '' ],
-);
-
-print<<MSG;
-Some of the Net::SSH::Perl ciphers depend on a Crypt:: module from
-CPAN. You may already have the necessary modules installed, in which
-case you don't need to bother with this step. Otherwise you'll need
-to install at least one cipher to use Net::SSH::Perl. Please choose
-at least one from the following list (Crypt::IDEA is the default).
-
-MSG
-
-my $i = 1;
-for my $ciph(sort { $a->[0] <=> $b->[0] } @cryptmod) {
-    printf "    [%d] %s\n", $i++, $ciph->[0];
-}
-my $c = prompt("\nEnter your choices, separated by spaces:", 1);
-print "\n";
-
-for my $id(split /\s+/, $c) {
-    next unless $cryptmod[$id-1]->[1];
-    $prereq{$cryptmod[$id-1]->[1]} = '0';
-}
-
 print "Checking for optional modules\n\n";
 
 unless (have_module('Digest::BubbleBabble', 0.01)) {
@@ -94,17 +62,6 @@ MSG
 
     if (read_yes_or_no("Would you like to install it? (y/n)", "y")) {
         $prereq{'Digest::BubbleBabble'} = '0.01';
-    }
-    print "\n";
-}
-
-unless (have_module('Crypt::RSA', 1.37)) {
-    print<<MSG, "\n";
-Crypt::RSA is required if you wish to use the ssh-rsa public
-key algorithm (ssh-dss is used by default).
-MSG
-    if (read_yes_or_no("Would you like to install it? (y/n)", "y")) {
-        $prereq{'Crypt::RSA'} = '1.37';
     }
     print "\n";
 }

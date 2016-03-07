@@ -8,19 +8,8 @@ use warnings;
 use Net::SSH::Perl::Cipher;
 use base qw( Net::SSH::Perl::Cipher );
 
+use Crypt::Cipher::Blowfish;
 use Net::SSH::Perl::Cipher::CBC;
-
-use vars qw( $BF_CLASS );
-BEGIN {
-    my @err;
-    for my $mod (qw( Crypt::OpenBSD::Blowfish Crypt::Blowfish Crypt::Blowfish_PP )) {
-        eval "use $mod;";
-        $BF_CLASS = $mod, last unless $@;
-        push @err, $@;
-    }
-    die "Failed to load Crypt::OpenBSD::Blowfish, Crypt::Blowfish, or Crypt::Blowfish_PP: @err"
-        unless $BF_CLASS;
-}
 
 sub new {
     my $class = shift;
@@ -35,7 +24,7 @@ sub blocksize { 8 }
 sub init {
     my $ciph = shift;
     my($key, $iv, $is_ssh2) = @_;
-    my $blow = $BF_CLASS->new($is_ssh2 ? substr($key, 0, 16) : $key);
+    my $blow = Crypt::Cipher::Blowfish->new($is_ssh2 ? substr($key, 0, 16) : $key);
     $ciph->{cbc} = Net::SSH::Perl::Cipher::CBC->new($blow,
         $iv ? substr($iv, 0, 8) : undef);
     $ciph->{is_ssh2} = defined $is_ssh2 ? $is_ssh2 : 0;
@@ -77,14 +66,8 @@ Net::SSH::Perl::Cipher::Blowfish - Wrapper for SSH Blowfish support
 =head1 DESCRIPTION
 
 I<Net::SSH::Perl::Cipher::Blowfish> provides Blowfish encryption
-support for I<Net::SSH::Perl>. To do so it wraps around either
-I<Crypt::Blowfish> or I<Crypt::Blowfish_PP>; the former is a
-C/XS implementation of the blowfish algorithm, and the latter is
-a Perl implementation. I<Net::SSH::Perl::Cipher::Blowfish> prefers
-to use I<Crypt::Blowfish>, because it's faster, so we try to load
-that first. If it fails, we fall back to I<Crypt::Blowfish_PP>.
-Note that, when using I<Crypt::Blowfish_PP>, you'll experience
-a very noticeable decrease in performance.
+support for I<Net::SSH::Perl>. To do so it wraps around 
+I<Crypt::Cipher::Blowfish> from the CryptX module.
 
 The blowfish used here is in CBC filter mode with a key length
 of 32 bytes.

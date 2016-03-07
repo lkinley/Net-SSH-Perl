@@ -9,7 +9,9 @@ use Net::SSH::Perl::Cipher;
 use base qw( Net::SSH::Perl::Cipher );
 
 use Net::SSH::Perl::Cipher::CBC;
-use Crypt::DES;
+use Crypt::Cipher::DES;
+
+sub keysize { 8 }
 
 sub new {
     my $class = shift;
@@ -21,7 +23,8 @@ sub new {
 sub init {
     my $ciph = shift;
     my($key, $iv) = @_;
-    my $des = Crypt::DES->new(substr $key, 0, 8);
+    $key = substr($key,0,$ciph->keysize);
+    my $des = Crypt::Cipher::DES->new($key);
     $ciph->{cbc} = Net::SSH::Perl::Cipher::CBC->new($des, $iv);
 }
 

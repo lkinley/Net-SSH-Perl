@@ -14,38 +14,16 @@ Protocol 1
 
 Protocol 2
 
-    * CryptX
-    * Crypt::DSA (0.03 or greater)
+    * CryptX (0.26 or greater)
     * Crypt::DH (0.01 or greater)
-    * Crypt::Curve25519 (0.04 or greater)
-    * Crypt::Ed25519
+    * Crypt::Curve25519 (0.05 or greater)
     * Math::Pari (2.001804 or greater)
     * MIME::Base64
     * Convert::PEM (0.05 or greater)
     * IO::Socket
 
-The module Crypt::OpenSSH::ChachaPoly is required if
-you wish to use the chacha20-poly1305@openssh.com cipher.
-It can be acquired from Git Hub at:
-https://github.com/lkinley/Crypt-OpenSSH-ChachaPoly
-or using git:
-git clone https://github.com/lkinley/Crypt-OpenSSH-ChachaPoly.git
-If the module is not installed, Net::SSH::Perl will fall back on
-other ciphers.
-
-The module Crypt::OpenBSD::Blowfish is required for encrypted
-Ed25519 key support.  It can be acquired from Git Hub at:
-https://github.com/lkinley/Crypt-OpenBSD-Blowfish
-or using git:
-git clone https://github.com/lkinley/Crypt-OpenBSD-Blowfish.git
-If the module is not installed, only unencrypted Ed25519 keys
-can be used.
-
-It also optionally requires Digest::BubbleBabble for
-generating bubble babble fingerprints, and Crypt::RSA
-(1.37 or greater) if you want to use RSA key files in SSH2.
-
-Note that RSA key files in SSH1 do not require Crypt::RSA.
+It optionally requires Digest::BubbleBabble for
+generating bubble babble fingerprints.
 
 INSTALLATION
 
@@ -67,21 +45,6 @@ Download it, unpack it, then build it as per the usual:
 Then install it:
 
     % make install
-
-If you have problems, read on.
-
-The only slightly complicated bit in the installation is
-that you'll need to install Crypt:: modules depending on
-which ciphers you wish to use. Much work has gone into
-making this simple; you should be asked a question about
-which ciphers you'll use, and the modules should be
-downloaded and installed automatically.
-
-If it doesn't work, or if you don't like this option, you'll
-need to do the installations manually. In which case you'll
-need to install the prerequisites listed above for your
-chosen protocol, plus any additional Crypt:: modules you
-wish to use.
 
 SAMPLES/TUTORIALS
 

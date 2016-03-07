@@ -9,7 +9,7 @@ use Net::SSH::Perl::Cipher;
 use base qw( Net::SSH::Perl::Cipher );
 
 use Net::SSH::Perl::Cipher::CBC;
-use Crypt::DES;
+use Crypt::Cipher::DES;
 
 sub new {
     my $class = shift;
@@ -37,7 +37,7 @@ sub init {
                 substr $key, 0, 8 :
                 substr $key, 8*($i-1), 8;
             $ciph->{"cbc$i"} = Net::SSH::Perl::Cipher::CBC->new(
-                Crypt::DES->new($this_key)
+                Crypt::Cipher::DES->new($this_key)
             );
         }
     }
@@ -88,7 +88,7 @@ sub init {
     my $ede3 = shift;
     my($key) = @_;
     for my $i (1..3) {
-        $ede3->{"des$i"} = Crypt::DES->new(substr $key, 8*($i-1), 8);
+        $ede3->{"des$i"} = Crypt::Cipher::DES->new(substr $key, 8*($i-1), 8);
     }
 }
 
@@ -127,7 +127,8 @@ Net::SSH::Perl::Cipher::DES3 - Wrapper for SSH 3DES support
 
 I<Net::SSH::Perl::Cipher::DES3> provides 3DES encryption
 support for I<Net::SSH::Perl>. To do so it wraps around
-I<Crypt::DES>, a C/XS implementation of the DES algorithm.
+I<Crypt::Cipher::DES>, the CryptX implementation of the DES
+algorithm.
 
 The 3DES (three-key triple-DES) algorithm used here differs
 based on the SSH protocol being used. SSH1 uses 3DES in

@@ -1,16 +1,17 @@
 package Net::SSH::Perl::Key::Ed25519;
 use strict;
 
+require XSLoader;
+XSLoader::load('Net::SSH::Perl');
+
 use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Constants qw( SSH_COMPAT_BUG_SIGBLOB );
-use Net::SSH::Perl::Util qw( :ssh2mp );
 use Crypt::Digest::SHA512 qw( sha512 );
 
-use Net::SSH::Perl::Key;
 use base qw( Net::SSH::Perl::Key );
 
+use Crypt::PRNG qw( random_bytes );
 use MIME::Base64;
-use Crypt::Ed25519;
 use Carp qw( croak );
 
 use constant MARK_BEGIN => "-----BEGIN OPENSSH PRIVATE KEY-----\n";
@@ -41,9 +42,10 @@ sub init {
 
 sub keygen {
     my $class = shift;
-    my $key = $class->new(undef);
+    my $key = __PACKAGE__->new(undef);
     $key->{comment} = shift;
-    ($key->{pub},$key->{priv}) = Crypt::Ed25519::generate_keypair;
+    my $secret = random_bytes(ED25519_PK_SZ);
+    ($key->{pub},$key->{priv}) = ed25519_generate_keypair($secret);
     $key;
 }
 
@@ -141,7 +143,7 @@ sub read_private {
             if ord($b->get_char) != ++$padnum;
     }
 
-    my $key = $class->new(undef);
+    my $key = __PACKAGE__->new(undef);
     $key->{comment} = $comment;
     $key->{pub} = $pub_key;
     $key->{priv} = $priv_key;
@@ -151,7 +153,7 @@ sub read_private {
 sub write_private {
     my $key = shift;
     my($key_file, $passphrase, $ciphername, $rounds) = @_;
-    my ($kdfoptions, $kdfname, $blocksize, $cipher);
+    my ($kdfoptions, $kdfname, $blocksize, $cipher, $authlen, $tag);
 
     if ($passphrase) {
         $ciphername ||= DEFAULT_CIPHERNAME;
@@ -166,7 +168,6 @@ sub write_private {
         my $keylen = $cipher->keysize;
         my $ivlen = $cipher->ivlen;
         $rounds ||= DEFAULT_ROUNDS;
-        use Crypt::PRNG qw( random_bytes );
         my $salt = random_bytes(SALT_LEN);
 
         my $kdf = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
@@ -179,11 +180,12 @@ sub write_private {
         my $key = substr($km,0,$keylen);
         my $iv = substr($km,$keylen,$ivlen);
         $cipher->init($key,$iv);
+        $authlen = $cipher->authlen;
     } else {
         $ciphername = 'none';
         $kdfname = 'none';
         $blocksize = 8;
-}
+    }
     my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
     $b->put_char(AUTH_MAGIC);
     $b->put_str($ciphername);
@@ -210,12 +212,9 @@ sub write_private {
          $kb->put_char(chr($_)) foreach (1..$blocksize-$r);
     }
     my $bytes = $cipher ? $cipher->encrypt($kb->bytes) : $kb->bytes;
-    my $tag;
-    if (my $authlen = $cipher->authlen) {
-        $tag = substr($bytes,-$authlen,$authlen,'');
-    }
+    $tag = substr($bytes,-$authlen,$authlen,'') if $authlen;
     $b->put_str($bytes);
-    $b->put_chars($tag);
+    $b->put_chars($tag) if $tag;
 
     local *FH;
     open FH, ">$key_file" or die "Cannot write key file";
@@ -235,7 +234,7 @@ sub dump_public {
 sub sign {
     my $key = shift;
     my $data = shift;
-    my $sig = Crypt::Ed25519::sign($data, $key->{pub}, $key->{priv});
+    my $sig = ed25519_sign_message($data, $key->{priv});
 
     my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
     $b->put_str($key->ssh_name);
@@ -255,7 +254,7 @@ sub verify {
     $sigblob = $b->get_str;
     croak "Invalid format" unless length($sigblob) == 64;
 
-    Crypt::Ed25519::verify($data,$key->{pub},$sigblob);
+    ed25519_verify_message($data,$key->{pub},$sigblob);
 }
 
 sub equal {
@@ -278,15 +277,14 @@ sub bcrypt_hash {
     my ($sha2pass, $sha2salt) = @_;
     my $ciphertext = 'OxychromaticBlowfishSwatDynamite';
 
-    require Crypt::OpenBSD::Blowfish;
-    my $bf = Crypt::OpenBSD::Blowfish->new();
-    $bf->expandstate($sha2salt,$sha2pass);
+    my $ctx = bf_init();
+    bf_expandstate($ctx,$sha2salt,$sha2pass);
     for (my $i=0; $i<64; $i++) {
-        $bf->expand0state($sha2salt);
-        $bf->expand0state($sha2pass);
+        bf_expand0state($ctx,$sha2salt);
+        bf_expand0state($ctx,$sha2pass);
     }
     # iterate 64 times
-    $bf->encrypt_iterate($ciphertext,64);
+    bf_encrypt_iterate($ctx,$ciphertext,64);
 }
 
 sub bcrypt_pbkdf {
@@ -346,10 +344,11 @@ Net::SSH::Perl::Key::Ed25519 - Ed25519 key object
 =head1 DESCRIPTION
 
 I<Net::SSH::Perl::Key::Ed25519> subclasses I<Net::SSH::Perl::Key>
-to implement an OpenSSH key object.  It uses the Crypt::Ed25519
-module to do the crypto heavy liftign.  The I<Net::SSH::Perl::Buffer>
-class is used to create blobs and transforms those it into a key 
-object and to write keys to an openssh-key-v1 file.
+to implement an OpenSSH key object.  It uses code taken from the
+SUPERCOP ref10 implementation to do the crypto heavy lifting.
+The I<Net::SSH::Perl::Buffer> class is used to create blobs and 
+transforms those it into a key object and to write keys to an 
+openssh-key-v1 file.
 
 =head1 USAGE
 
@@ -359,9 +358,8 @@ additions are described here.
 
 =head2 $key->sign($data)
 
-Uses I<Crypt::Ed25519> to sign I<$data> using the private and public
-key portions of I<$key>, then encodes that signature into an
-SSH-compatible signature blob.
+Signs I<$data> using the private and public key portions of I<$key>,
+then encodes that signature into an SSH-compatible signature blob.
 
 Returns the signature blob.
 
@@ -369,8 +367,7 @@ Returns the signature blob.
 
 Given a signature blob I<$signature> and the original signed data
 I<$data>, attempts to verify the signature using the public key
-portion of I<$key>. This uses I<Crypt::Ed25519::verify> to
-perform the core verification.
+portion of I<$key>. 
 
 I<$signature> should be an SSH-compatible signature blob, as
 returned from I<sign>; I<$data> should be a string of data, as
@@ -378,15 +375,15 @@ passed to I<sign>.
 
 Returns true if the verification succeeds, false otherwise.
 
-=head2 Net::SSH::Perl::Key::Ed25519->keygen($comment)
+=head2 Net::SSH::Perl::Key::Ed25519->keygen([$comment])
 
-Uses I<Crypt::Ed25519> to generate a new key with comment.
+Generates a new key with (optional) comment.
 
 =head1 AUTHOR & COPYRIGHTS
 
 Lance Kinley E<lkinley@loyaltymethods.com>
 
-Copyright (c) 2015 Loyalty Methods, Inc.
+Copyright (c) 2015-2016 Loyalty Methods, Inc.
 
 =head1 LICENSE
 
