@@ -11,6 +11,7 @@ use Net::SSH::Perl::Auth;
 use Net::SSH::Perl::Constants qw(
     SSH2_MSG_SERVICE_REQUEST
     SSH2_MSG_SERVICE_ACCEPT
+    SSH2_MSG_EXT_INFO
     SSH2_MSG_USERAUTH_BANNER
     SSH2_MSG_USERAUTH_REQUEST
     SSH2_MSG_USERAUTH_SUCCESS
@@ -43,6 +44,18 @@ sub init {
     $packet->send;
 
     $packet = Net::SSH::Perl::Packet->read($ssh);
+    if ($packet->type == SSH2_MSG_EXT_INFO) {
+        $ssh->debug("SSH2_MSG_EXT_INFO received");
+        my $num_ext = $packet->get_int32;
+        while ($num_ext) {
+            my $name = $packet->get_str;
+            my $value = $packet->get_str;
+            $ssh->debug("SSH Extension activated: $name=$value");
+            $ssh->{$name} = $value;
+            $num_ext--;
+        }
+        $packet = Net::SSH::Perl::Packet->read($ssh);
+    }
     croak "Server denied SSH2_MSG_SERVICE_ACCEPT: ", $packet->type
         unless $packet->type == SSH2_MSG_SERVICE_ACCEPT;
     $ssh->debug("Service accepted: " . $packet->get_str . ".");

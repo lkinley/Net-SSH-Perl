@@ -6,12 +6,11 @@ use warnings;
 
 use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Constants qw( SSH_COMPAT_BUG_SIGBLOB );
-use Net::SSH::Perl::Util qw( :ssh2mp );
 
 use Net::SSH::Perl::Key;
 use base qw( Net::SSH::Perl::Key );
 
-use MIME::Base64;
+use MIME::Base64 qw( encode_base64 );
 use Crypt::PK::DSA;
 use Carp qw( croak );
 

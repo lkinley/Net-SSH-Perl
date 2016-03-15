@@ -80,7 +80,7 @@ sub _auth_identity {
     $ssh->debug("Trying pubkey authentication with key file '$auth_file'");
 
     $key = Net::SSH::Perl::Key->read_private_pem($auth_file, '',
-        \$ssh->{datafellows});
+        \$ssh->{datafellows}, $ssh->{'server-sig-algs'});
     if (!$key) {
         my $passphrase = "";
         if ($ssh->config->get('interactive')) {
@@ -159,7 +159,8 @@ sub _test_pubkey {
         $ssh->debug("PK_OK received without existing key state."), return
             unless $key && $cb;
 
-        my $s_key = Net::SSH::Perl::Key->new_from_blob($blob);
+        my $s_key = Net::SSH::Perl::Key->new_from_blob($blob, undef,
+            $ssh->{'server-sig-algs'});
         $ssh->debug("Failed extracting key from blob, pkalgorithm is '$alg'"),
             return unless $s_key;
         $ssh->debug("PK_OK key != saved state key"), return

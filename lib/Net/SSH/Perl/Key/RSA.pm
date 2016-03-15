@@ -7,33 +7,49 @@ use warnings;
 use Crypt::PK::RSA;
 use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Constants qw( SSH_COMPAT_BUG_RSASIGMD5 );
-use MIME::Base64;
+use MIME::Base64 qw( encode_base64 );
 use Carp qw( croak );
 use base qw( Net::SSH::Perl::Key );
 
-sub ssh_name { 'ssh-rsa' }
+my %dgst_map = (
+    'ssh-rsa' => 'SHA1',
+    'rsa-sha2-256' => 'SHA256',
+    'rsa-sha2-512' => 'SHA512'
+);
+
+sub ssh_name {
+    my $key = shift;
+    my $name = shift;
+    $key->{ssh_name} = $name if $name;
+    return $key->{ssh_name} || 'ssh-rsa'
+}
 
 sub init {
     my $key = shift;
     $key->{rsa_priv} = Crypt::PK::RSA->new;
     $key->{rsa_pub}  = Crypt::PK::RSA->new;
 
-    my($blob, $datafellows) = @_;
-
+    my($blob, $datafellows, $sig_algs) = @_;
     if ($blob) {
         my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
         $b->append($blob);
         my $ktype = $b->get_str;
         croak __PACKAGE__, "->init: cannot handle type '$ktype'"
             unless $ktype eq $key->ssh_name;
-        $key->{rsa_pub}->import_key( {
-            e => unpack('H*', $b->get_raw_bignum),
-            N => unpack('H*', $b->get_raw_bignum)
-        } );
+        my $pubkey = $key->ssh_name . ' ' . encode_base64($blob,'');
+        $key->{rsa_pub}->import_key( \$pubkey );
     }
 
     if ($datafellows) {
         $key->{datafellows} = $datafellows;
+    }
+
+    my @types;
+    push @types, split(',',$sig_algs) if $sig_algs;
+    push @types, 'ssh-rsa';
+    foreach my $t (@types) {
+        $key->ssh_name($t) if $key->{digest} = $dgst_map{$t};
+        last if $key->{digest};
     }
 }
 
@@ -61,9 +77,9 @@ sub size { eval { $_[0]->{rsa_pub}->key2hash->{size} * 8 } }
 
 sub read_private {
     my $class = shift;
-    my($key_file, $passphrase, $datafellows) = @_;
+    my($key_file, $passphrase, $datafellows, $sig_algs) = @_;
 
-    my $key = __PACKAGE__->new(undef, $datafellows);
+    my $key = __PACKAGE__->new(undef, $datafellows, $sig_algs);
     $key->{rsa_priv}->import_key($key_file, $passphrase);
     $key->_pub_from_private;
     $key;
@@ -84,8 +100,8 @@ sub dump_public { $_[0]->ssh_name . ' ' . encode_base64( $_[0]->as_blob, '' ) }
 sub sign {
     my $key = shift;
     my($data) = @_;
-    my $dgst = $key->{datafellows} && ${ $key->{datafellows} } & SSH_COMPAT_BUG_RSASIGMD5
-		? 'MD5' : 'SHA1';
+    my $dgst ||= $key->{datafellows} && ${ $key->{datafellows} } & SSH_COMPAT_BUG_RSASIGMD5
+		? 'MD5' : $key->{digest};
 
     my $sig = $key->{rsa_priv}->sign_message($data, $dgst,'v1.5') or return;
 
@@ -102,11 +118,10 @@ sub verify {
     my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
     $b->append($signature);
     my $ktype = $b->get_str;
-    croak "Can't verify type ", $ktype unless $ktype eq $key->ssh_name;
     my $sigblob = $b->get_str;
-
     my $dgst = $key->{datafellows} && ${ $key->{datafellows} } & SSH_COMPAT_BUG_RSASIGMD5 ?
-        'MD5' : 'SHA1';
+        'MD5' : $dgst_map{$ktype};
+    croak "Can't verify type ", $ktype unless $dgst;
 
     $key->{rsa_pub}->verify_message($sigblob, $data, $dgst,'v1.5');
 }

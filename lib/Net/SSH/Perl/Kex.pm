@@ -87,6 +87,8 @@ sub exchange {
     if (my $algos = $ssh->config->get('kex_algorithms')) {
         $proposal[ PROPOSAL_KEX_ALGS ] = $algos;
     }
+    $proposal[ PROPOSAL_KEX_ALGS ] .= ',ext-info-c'
+        if $proposal[ PROPOSAL_KEX_ALGS ] !~ /ext-info-c/;
     if (my $macs = $ssh->config->get('macs')) {
         $proposal[ PROPOSAL_MAC_ALGS_CTOS ] = 
         $proposal[ PROPOSAL_MAC_ALGS_STOC ] = $macs;
