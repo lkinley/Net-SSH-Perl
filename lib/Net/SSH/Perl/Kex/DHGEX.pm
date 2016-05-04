@@ -5,14 +5,11 @@ use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Packet;
 use Net::SSH::Perl::Constants qw( :msg2 :kex );
 use Net::SSH::Perl::Key;
-use Net::SSH::Perl::Util qw( bitsize );
 
 use Carp qw( croak );
-use Crypt::DH;
-use Math::Pari;
+use Crypt::PK::DH;
 use Scalar::Util qw(weaken);
 
-use Net::SSH::Perl::Kex;
 use base qw( Net::SSH::Perl::Kex );
 
 sub new {
@@ -23,7 +20,7 @@ sub new {
     $kex;
 }
 
-sub min_bits { 1024 }
+sub min_bits { 2048 }
 sub want_bits { 4096 }
 sub max_bits { 8192 }
 
@@ -49,19 +46,20 @@ sub exchange {
     my $p = $packet->get_mp_int;
     my $g = $packet->get_mp_int;
     # range check on p
-    my $p_bits = bitsize($p);
+    my $p_bits = $kex->bitsize($p);
     if ($p_bits < $kex->min_bits || $p_bits > $kex->max_bits) {
-        $ssh->fatal_disconnect('DH Group Exchange reply out of range');
+        $ssh->fatal_disconnect("DH Group Exchange reply out of range ($p_bits bits)");
     }
-    $ssh->debug("Received DH Group Exchange reply.");
+    $ssh->debug("Received $p_bits bit DH Group Exchange reply.");
 
     # step 3 in rfc 4419
     $ssh->debug('Generating new Diffie-Hellman keys.');
-    my $dh = $kex->_dh_new_group($p,$g);
+    my $dh = $kex->_dh_new_group($p, $g);
 
     $ssh->debug('Entering Diffie-Hellman key exchange.');
     $packet = $ssh->packet_start(SSH2_MSG_KEX_DH_GEX_INIT);
-    $packet->put_mp_int($dh->pub_key);
+    my $pub_key = $dh->export_key_raw('public');
+    $packet->put_mp_int($pub_key);
     $packet->send;
     $ssh->debug('Sent DH public key, waiting for reply.');
 
@@ -78,12 +76,12 @@ sub exchange {
     $ssh->check_host_key($s_host_key);
 
     my $dh_server_pub = $packet->get_mp_int;
+    my $dh_server_pub_key = Crypt::PK::DH->new;
+    # create public key object (which will also check the public key for validity)
+    $dh_server_pub_key->import_key_raw($dh_server_pub, 'public', $dh->params2hash);
+
+    my $shared_secret = $dh->shared_secret($dh_server_pub_key);
     my $signature = $packet->get_str;
-
-    $ssh->fatal_disconnect("Bad server public DH value")
-        unless _pub_is_valid($dh, $dh_server_pub);
-
-    my $shared_secret = $dh->compute_key($dh_server_pub);
 
     my $hash = $kex->kex_hash(
         $ssh->client_version_string,
@@ -92,7 +90,7 @@ sub exchange {
         $kex->server_kexinit,
         $host_key_blob,
         $p, $g,
-        $dh->pub_key,
+        $pub_key,
         $dh_server_pub,
         $shared_secret);
 
@@ -137,39 +135,24 @@ sub kex_hash {
     $kex->hash($b->bytes);
 }
 
-sub _pub_is_valid {
-    my($dh, $dh_pub) = @_;
-    return if $dh_pub < 0;
-
-    my $bits_set = 0;
-    my $n = bitsize($dh_pub);
-    for my $i (0..$n) {
-	$bits_set++ if $dh_pub & (PARI(1) << PARI($i));
-        last if $bits_set > 1;
-    }
-
-    $bits_set > 1 && $dh_pub < ($dh->p-1);
-}
-
-sub _gen_key {
+sub bitsize {
     my $kex = shift;
-    my $dh = shift;
-    my $tries = 0;
-    {
-	$dh->generate_keys;
-	last if _pub_is_valid($dh, $dh->pub_key);
-	croak "Too many bad keys: giving up" if $tries++ > 10;
+    my $num = shift or return 0;
+    my $first = substr($num,0,1);
+    my $bitsize = 0;
+    while (ord($first)) {
+        $bitsize++;
+        $first = chr(ord($first) >> 1);
     }
+    $bitsize += ((length($num)-1) * 8);
+    return $bitsize;
 }
 
 sub _dh_new_group {
     my $kex = shift;
     my ($p,$g) = @_;
-    my $dh = Crypt::DH->new;
-    $dh->g($g);
-    $dh->p($p);
-
-    $kex->_gen_key($dh);
+    my $dh = Crypt::PK::DH->new;
+    $dh->generate_key({ g => unpack('H*',$g), p => unpack('H*',$p) });
     $dh;
 }
 

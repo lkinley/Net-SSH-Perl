@@ -10,7 +10,7 @@ use Net::SSH::Perl::Constants qw( SSH_COMPAT_BUG_SIGBLOB );
 use Net::SSH::Perl::Key;
 use base qw( Net::SSH::Perl::Key );
 
-use MIME::Base64 qw( encode_base64 );
+use Crypt::Misc qw( encode_b64 );
 use Crypt::PK::DSA;
 use Carp qw( croak );
 
@@ -30,7 +30,7 @@ sub init {
         my $ktype = $b->get_str;
         croak __PACKAGE__, "->init: cannot handle type '$ktype'"
             unless $ktype eq $key->ssh_name;
-        my $pubkey = $key->ssh_name . ' ' . encode_base64($b->bytes,'');
+        my $pubkey = $key->ssh_name . ' ' . encode_b64($b->bytes);
         $key->{dsa}->import_key( \$pubkey );
     }
 
@@ -70,7 +70,7 @@ sub write_private {
     close $fh or croak "Can't close $key_file: $!";
 }
 
-sub dump_public { $_[0]->ssh_name . ' ' . encode_base64( $_[0]->as_blob, '' ) }
+sub dump_public { $_[0]->ssh_name . ' ' . encode_b64( $_[0]->as_blob ) }
 
 sub sign {
     my $key = shift;

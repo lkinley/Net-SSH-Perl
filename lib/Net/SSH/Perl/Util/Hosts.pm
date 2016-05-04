@@ -5,6 +5,8 @@ use strict;
 use warnings;
 
 use Net::SSH::Perl::Constants qw( :hosts );
+use Crypt::Misc qw( encode_b64 decode_b64 );
+use Crypt::Mac::HMAC qw( hmac );
 
 use Carp qw( croak );
 
@@ -42,33 +44,8 @@ sub _check_host_in_hostfile {
             }
             my $salt = $1;
 
-            ## Make sure we have the required helper modules.
-            ## If not, give one warning per file
-            next if $hashmodules >= 1;
-            if (!$hashmodules) {
-                eval { require Crypt::Mac::HMAC; };
-                if ($@) {
-                    $hashmodules += 1;
-                }
-                eval { require MIME::Base64; };
-                if ($@) {
-                    $hashmodules += 2;
-                }
-                if ($hashmodules) {
-                    my $msg = sprintf qq{Cannot parse hashed known_hosts file "$hostfile" without %s%s\n},
-                        $hashmodules == 2 ? 'MIME::Base64' : 'Crypt::Mac::HMAC',
-                            $hashmodules == 3 ? ' and MIME::Base64' : '';
-                    warn $msg;
-                    next;
-                }
-                else {
-                    $hashmodules = -1;
-                }
-            }
-
-            my $rawsalt = MIME::Base64::decode_base64($salt);
-            my $hash = MIME::Base64::encode_base64(Crypt::Mac::HMAC::hmac('SHA1',$rawsalt,$host));
-            chomp $hash;
+            my $rawsalt = decode_b64($salt);
+            my $hash = encode_b64(hmac('SHA1',$rawsalt,$host));
             $checkhost = "|1|$salt|$hash";
         }
 
@@ -99,12 +76,10 @@ sub _add_host_to_hostfile {
     my $data;
     open my $fh, '>>', $hostfile or croak "Can't write to $hostfile: $!";
     if ($hash) {
-        use Crypt::Mac::HMAC qw( hmac );
-        use MIME::Base64 qw(encode_base64);
         use Crypt::PRNG qw( random_bytes );
         my $rawsalt = random_bytes(SALT_LEN);
-        my $salt = encode_base64($rawsalt,'');
-        my $hash = encode_base64(hmac('SHA1',$rawsalt,$host),'');
+        my $salt = encode_b64($rawsalt);
+        my $hash = encode_b64(hmac('SHA1',$rawsalt,$host));
         $data = join(' ', "|1|$salt|$hash", $key->dump_public);
     }
     else {

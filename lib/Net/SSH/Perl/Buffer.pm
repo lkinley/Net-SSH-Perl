@@ -4,13 +4,12 @@ package Net::SSH::Perl::Buffer;
 use strict;
 use warnings;
 
-use constant MAX_BIGNUM => 32;
+use constant MAX_BIGNUM => 2048;
 
 {
     my %MP_MAP = (
         SSH1 => [ "use Math::GMP;", \&_get_mp_int_ssh1, \&_put_mp_int_ssh1 ],
-        SSH2 => [ "use Net::SSH::Perl::Util qw( :ssh2mp )",
-                  \&_get_mp_int_ssh2, \&_put_mp_int_ssh2 ],
+        SSH2 => [ "1;", \&get_bignum2_bytes, \&put_bignum2_bytes],
     );
 
     sub new {
@@ -163,21 +162,6 @@ sub _put_mp_int_ssh1 {
     $buf->put_chars($tmp);
 }
 
-sub _get_mp_int_ssh2 {
-    my $buf = shift;
-    my $bits = $buf->get_str;
-    bin2mp($bits);
-}
-
-sub _put_mp_int_ssh2 {
-    my $buf = shift;
-    my $int = shift;
-    my $bin = mp2bin($int);
-    my $hasnohigh = (vec($bin, 0, 8) & 0x80) ? 0 : 1;
-    $bin = "\0" . $bin unless $hasnohigh;
-    $buf->put_str($bin);
-}
-
 sub put_bignum2_bytes {
     my $buf = shift;
     my $num = shift;
@@ -205,18 +189,6 @@ sub get_bignum2_bytes {
         ($len == MAX_BIGNUM+1 &&
         ord(substr($num,0,1)) != 0);
     # trim leading zero bytes
-    substr($num,0,1,'') while ord(substr($num,0,1)) == 0;
-    return $num;
-}
-
-sub get_raw_bignum {
-    my $buf = shift;
-
-    my $num = $buf->get_str;
-    my $len = CORE::length($num);
-    return unless $len;
-    # refuse negative (MSB set) bignums
-    return if ord(substr($num,0,1)) & 0x80;
     substr($num,0,1,'') while ord(substr($num,0,1)) == 0;
     return $num;
 }
@@ -328,7 +300,7 @@ itself) to the buffer.
 Returns a bigint object representing a multiple precision
 integer read from the buffer. Depending on the protocol,
 the object is either of type I<Math::GMP> (SSH1) or
-I<Math::Pari> (SSH2).
+a binary string (SSH2).
 
 You determine which protocol will be in use when you
 I<use> the module: specify I<SSH1> or I<SSH2> to load
@@ -340,8 +312,8 @@ the proper I<get> and I<put> routines for bigints:
 
 Appends a multiple precision integer to the buffer.
 Depending on the protocol in use, I<$mp_int> should
-be either a I<Math::GMP> object (SSH1) or a I<Math::Pari>
-object (SSH2). The format in which the integer is
+be either a I<Math::GMP> object (SSH1) or a binary
+string (SSH2). The format in which the integer is
 stored in the buffer differs between the protocols,
 as well.
 

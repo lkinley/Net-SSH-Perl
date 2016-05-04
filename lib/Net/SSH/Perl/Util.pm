@@ -15,10 +15,6 @@ use vars qw( %FUNC_TO_MOD %EXPORT_TAGS );
     _load_private_key         => 'Authfile',
     _load_public_key          => 'Authfile',
     _save_private_key         => 'Authfile',
-    bitsize                   => 'SSH2MP',
-    bin2mp                    => 'SSH2MP',
-    mp2bin                    => 'SSH2MP',
-    mod_inverse               => 'SSH2MP',
     _respond_to_rsa_challenge => 'RSA',
     _rsa_public_encrypt       => 'RSA',
     _rsa_private_decrypt      => 'RSA',
@@ -34,7 +30,6 @@ use vars qw( %FUNC_TO_MOD %EXPORT_TAGS );
     rsa      => [ qw( _rsa_public_encrypt _rsa_private_decrypt
                       _respond_to_rsa_challenge ) ],
     ssh1mp   => [ qw( _compute_session_id _mp_linearize ) ],
-    ssh2mp   => [ qw( bitsize bin2mp mp2bin mod_inverse ) ],
     authfile => [ qw( _load_public_key _load_private_key _save_private_key ) ],
     win32    => [ qw( _current_user_win32 _socketpair ) ],
     all      => [ keys %FUNC_TO_MOD ],
@@ -123,12 +118,6 @@ Because the SSH1 implementation uses I<Math::GMP> for its
 big integers, the functions in I<ssh1mp> all deal with
 I<Math::GMP> objects.
 
-=item * ssh2mp
-
-Routines associated with SSH2 big integers, which are
-I<Math::Pari> objects. Contains C<bitsize>, C<bin2mp>, and
-C<mp2bin>.
-
 =item * authfile
 
 Routines associated with loading of RSA SSH1 keys (both public
@@ -173,22 +162,6 @@ Converts a multiple-precision integer I<$int> into a byte string.
 I<$int> should be a I<Math::GMP> object.
 
 Returns the byte string.
-
-=head2 bitsize($int)
-
-Returns the number of bits in I<$int>, which should be a
-I<Math::Pari> object.
-
-=head2 bin2mp($octet_string)
-
-Treats I<$octet_string> as a representation of a big integer in
-base 256, and converts the string into that integer. Returns the
-integer, a I<Math::Pari> object.
-
-=head2 mp2bin($int)
-
-Converts I<$int>, a I<Math::Pari> object, into an octet string
-(ie. the reverse of C<bin2mp>). Returns the octet string.
 
 =head2 _check_host_in_hostfile($host, $host_file, $host_key)
 

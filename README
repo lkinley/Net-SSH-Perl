@@ -14,11 +14,8 @@ Protocol 1
 
 Protocol 2
 
-    * CryptX (0.26 or greater)
-    * Crypt::DH (0.01 or greater)
+    * CryptX (0.032 or greater)
     * Crypt::Curve25519 (0.05 or greater)
-    * Math::Pari (2.001804 or greater)
-    * MIME::Base64
     * Convert::PEM (0.05 or greater)
     * IO::Socket
 
