@@ -1,5 +1,24 @@
 Revision history for Net::SSH::Perl
 
+2.02 2016.05.04
+
+    - Use CryptX to further reduce module depedencies
+      This eliminates the need for:
+        Math::Pari
+        Crypt::DH
+        Crypt::RSA
+        Crypt::DSA
+        Crypt::DES
+        Crypt::Blowfish
+        MIME::Base64
+    - Add support for rsa-sha2-512,rsa-sha2-256 signing with RSA keys
+    - Implement HashKnownHosts, KexAlgorithms, MACs config directives
+    - Add XS code for Chacha20, BSD Blowfish, Ed25519 routines
+    - Properly handle and create known_hosts entries when port is specified
+    - Remove obsolete ciphers, MACs, Kex from default list to duplicate 
+      upcoming OpenSSH behavior
+    - Bug fixes
+
 2.01 2016.02.19
 
     - Use CryptX to reduce module depedencies

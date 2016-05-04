@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name                    : Net-SSH-Perl
-version                 : 2.01
+version                 : 2.02
 abstract                : Perl client interface to SSH
 author:              
   - David Robins <dbrobins@cpan.org>
@@ -10,17 +10,13 @@ distribution_type       : module
 dynamic_config          : 1
 
 requires:     
-  CryptX                : 0.26
+  CryptX                : 0.032
   Convert::PEM          : 0.05
   Crypt::Curve25519     : 0.04
-  Crypt::DH             : 0.01
-  Crypt::DSA            : 0.11
   Crypt::Ed25519        : 1.0
   Crypt::IDEA           : 0
   IO::Socket            : 0
   Math::GMP             : 1.04
-  Math::Pari            : 2.001804
-  MIME::Base64          : 0
   Scalar::Util          : 0
   String::CRC32         : 1.2
 build_requires:
