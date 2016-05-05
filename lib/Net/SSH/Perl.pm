@@ -29,6 +29,9 @@ eval {
 
 $VERSION = '2.02';
 
+use XSLoader;
+XSLoader::load('Net::SSH::Perl', $VERSION);
+
 sub VERSION { $VERSION }
 
 sub new {

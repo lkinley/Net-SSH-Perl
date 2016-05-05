@@ -82,9 +82,12 @@ sub sign {
     return unless ord(substr($dersig,0,1,'')) == 2; # Type INTEGER
     my $intlen = ord(substr($dersig,0,1,''));
     my $r = substr($dersig,0,$intlen,'');
+    # numbers with highest bit set are padded with leading zero so strip it 
+    $r = substr($r,$intlen - INTBLOB_LEN) if $intlen > INTBLOB_LEN;
     return unless ord(substr($dersig,0,1,'')) == 2; # Type INTEGER
     $intlen = ord(substr($dersig,0,1,''));
     my $s = substr($dersig,0,$intlen,'');
+    $s = substr($s,$intlen - INTBLOB_LEN) if $intlen > INTBLOB_LEN;
 
     $r = "\0" x (INTBLOB_LEN-length($r)) . $r;
     $s = "\0" x (INTBLOB_LEN-length($s)) . $s;

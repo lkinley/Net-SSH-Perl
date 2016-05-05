@@ -1,9 +1,6 @@
 package Net::SSH::Perl::Key::Ed25519;
 use strict;
 
-require XSLoader;
-XSLoader::load('Net::SSH::Perl');
-
 use Net::SSH::Perl::Buffer;
 use Net::SSH::Perl::Constants qw( SSH_COMPAT_BUG_SIGBLOB );
 use Crypt::Digest::SHA512 qw( sha512 );
