@@ -16,12 +16,12 @@ my %SSH_PREREQ = (
         'String::CRC32'     => '1.2',
         'Math::GMP'         => '1.04',
         'Scalar::Util'      => 0,
+        'Crypt::IDEA'       => 0,
     },
 
     2 => {
         'CryptX'            => '0.032',
         'Crypt::Curve25519' => '0.05',
-        'Convert::PEM'      => '0.05',
     },
 );
 

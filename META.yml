@@ -11,9 +11,7 @@ dynamic_config          : 1
 
 requires:     
   CryptX                : 0.032
-  Convert::PEM          : 0.05
-  Crypt::Curve25519     : 0.04
-  Crypt::Ed25519        : 1.0
+  Crypt::Curve25519     : 0.05
   Crypt::IDEA           : 0
   IO::Socket            : 0
   Math::GMP             : 1.04

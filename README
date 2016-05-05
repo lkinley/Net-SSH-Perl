@@ -11,12 +11,12 @@ Protocol 1
     * String::CRC32 (1.2 or greater)
     * Digest::MD5
     * IO::Socket
+    * Crypt::IDEA
 
 Protocol 2
 
     * CryptX (0.032 or greater)
     * Crypt::Curve25519 (0.05 or greater)
-    * Convert::PEM (0.05 or greater)
     * IO::Socket
 
 It optionally requires Digest::BubbleBabble for
