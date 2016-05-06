@@ -24,7 +24,8 @@ sub blocksize { 8 }
 sub init {
     my $ciph = shift;
     my($key, $iv, $is_ssh2) = @_;
-    my $blow = Crypt::Cipher::Blowfish->new($is_ssh2 ? substr($key, 0, 16) : $key);
+    $key = substr($key, 0, 16);
+    my $blow = Crypt::Cipher::Blowfish->new($key);
     $ciph->{cbc} = Net::SSH::Perl::Cipher::CBC->new($blow,
         $iv ? substr($iv, 0, 8) : undef);
     $ciph->{is_ssh2} = defined $is_ssh2 ? $is_ssh2 : 0;

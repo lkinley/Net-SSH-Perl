@@ -27,10 +27,7 @@ eval {
     $HOSTNAME = hostname();
 };
 
-$VERSION = '2.02';
-
-use XSLoader;
-XSLoader::load('Net::SSH::Perl', $VERSION);
+$VERSION = '2.03';
 
 sub VERSION { $VERSION }
 

@@ -21,6 +21,9 @@ use constant DEFAULT_ROUNDS => 16;
 use constant DEFAULT_CIPHERNAME => 'aes256-cbc';
 use constant KDFNAME => 'bcrypt';
 
+use XSLoader;
+XSLoader::load('Net::SSH::Perl');
+
 sub ssh_name { 'ssh-ed25519' }
 
 sub init {

@@ -13,7 +13,7 @@ require 'test-common.pl';
 use Net::SSH::Perl::Cipher;
 use Test::More;
 
-my $KEY = pack "H64", ("0123456789ABCDEF" x 4);
+my $KEY = pack "H128", ("0123456789ABCDEF" x 8);
 my $PASS = pack "H16", ("0123456789ABCDEF");
 
 my %TESTS;

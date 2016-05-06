@@ -1,5 +1,9 @@
 Revision history for Net::SSH::Perl
 
+2.03 2016.05.06
+
+    - Fixes so that "make test" passes
+
 2.02 2016.05.04
 
     - Use CryptX to further reduce module depedencies
