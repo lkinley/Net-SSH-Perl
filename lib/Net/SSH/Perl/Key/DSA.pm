@@ -48,7 +48,7 @@ sub keygen {
     $key;
 }
 
-sub size { eval { $_[0]->{dsa}->key2hash->{size} * 8 } }
+sub size { eval { $_[0]->{dsa}->size * 8 } }
 
 sub read_private {
     my $class = shift;
@@ -69,8 +69,6 @@ sub write_private {
     print $fh $pem;
     close $fh or croak "Can't close $key_file: $!";
 }
-
-sub dump_public { $_[0]->ssh_name . ' ' . encode_b64( $_[0]->as_blob ) }
 
 sub sign {
     my $key = shift;

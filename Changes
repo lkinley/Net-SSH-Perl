@@ -1,5 +1,13 @@
 Revision history for Net::SSH::Perl
 
+2.04 2016.05.11
+
+    - Add ECDSA key support
+    - Improve extract_public() in Key.pm inspired by
+      https://github.com/renormalist/Net-SSH-Perl/pull/12
+      but implement comment with backwards compat with RSA/DSA datafellows
+    - Fix XS from being loaded more than once (warnings from Net::SFTP)
+
 2.03 2016.05.06
 
     - Fixes so that "make test" passes

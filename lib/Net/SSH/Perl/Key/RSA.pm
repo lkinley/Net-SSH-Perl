@@ -73,7 +73,7 @@ sub _pub_from_private {
     } );
 }
 
-sub size { eval { $_[0]->{rsa_pub}->key2hash->{size} * 8 } }
+sub size { eval { $_[0]->{rsa_pub}->size * 8 } }
 
 sub read_private {
     my $class = shift;
@@ -87,15 +87,13 @@ sub read_private {
 
 sub write_private {
     my $key = shift;
-    my($key_file, $passphrase) = @_;
+    my($key_file, $passphrase, $cipher) = @_;
 
-    my $pem = $key->{rsa_priv}->export_key_pem('private', $passphrase) or return;
+    my $pem = $key->{rsa_priv}->export_key_pem('private', $passphrase, $cipher) or return;
     open my $fh, '>', $key_file or croak "Can't write to $key_file: $!";
     print $fh $pem;
     close $fh or croak "Can't close $key_file: $!";
 }
-
-sub dump_public { $_[0]->ssh_name . ' ' . encode_b64( $_[0]->as_blob ) }
 
 sub sign {
     my $key = shift;
@@ -143,8 +141,8 @@ sub as_blob {
     my $hash = defined $key->{rsa_pub} && $key->{rsa_pub}->key2hash;
     $b->put_str($key->ssh_name);
     my $e = substr('0',0,length($hash->{e}) % 2) . $hash->{e}; # prepend 0 if hex string is odd length, ie: 10001 (65537 decimal)
-    $b->put_bignum2_bytes(pack('H*',$e));
-    $b->put_bignum2_bytes(pack('H*',$hash->{N}));
+    $b->put_mp_int(pack('H*',$e));
+    $b->put_mp_int(pack('H*',$hash->{N}));
     $b->bytes;
 }
 

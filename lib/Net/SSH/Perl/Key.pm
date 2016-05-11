@@ -5,6 +5,7 @@ use strict;
 use warnings;
 
 use Crypt::Digest::MD5 qw( md5 );
+use Crypt::Misc qw( encode_b64 decode_b64 );
 use Net::SSH::Perl::Buffer;
 
 sub new {
@@ -24,6 +25,9 @@ use vars qw( %KEY_TYPES );
     'ssh-dss' => 'DSA',
     'ssh-rsa' => 'RSA',
     'ssh-ed25519' => 'Ed25519',
+    'ecdsa-sha2-nistp256' => 'ECDSA256',
+    'ecdsa-sha2-nistp384' => 'ECDSA384',
+    'ecdsa-sha2-nistp521' => 'ECDSA521',
 );
 
 sub new_from_blob {
@@ -38,13 +42,35 @@ sub new_from_blob {
 
 sub extract_public {
     my $class = shift;
-    my($blob) = @_;
-    my($ssh_name, $data) = split /\s+/, $blob;
-    my $type = $KEY_TYPES{$ssh_name};
-    return unless $type;
-    eval "use Crypt::Misc qw( decode_b64 )";
-    die $@ if $@;
-    __PACKAGE__->new($type, decode_b64($data));
+    my($blob) = pop @_;
+    my $expected_type = @_ ? shift : undef;
+
+    my $type;
+    my $options;
+    foreach my $t (keys %KEY_TYPES) {
+        if ((my $type_offset = index($blob,$t)) >= 0) {
+            $type = $t;
+            $options = substr($blob,0,$type_offset,'') if $type_offset > 0;
+            last;
+        }
+    }
+
+    # TODO do something with ssh options $options
+
+    if (!defined $type) {
+        warn "Invalid public key line";
+        return;
+    }
+    substr($blob,0,length($type)+1,'');
+    my($data, $comment) = split /\s+/, $blob, 2;
+    if (defined $expected_type && $expected_type ne $type) {
+        warn "Requested type '$expected_type' mismatches actual type '$type'";
+        return;
+    }
+    $type = $KEY_TYPES{$type};
+    my $key = __PACKAGE__->new($type, decode_b64($data));
+    $key->comment($comment);
+    $key;
 }
 
 BEGIN {
@@ -68,6 +94,7 @@ use vars qw( %OBJ_MAP );
     'SSH2 ENCRYPTED PRIVATE KEY' => [ 'DSA', [ 'SSH2' ] ],
     'RSA PRIVATE KEY'  => [ 'RSA' ],
     'OPENSSH PRIVATE KEY'  => [ 'Ed25519' ],
+    'EC PRIVATE KEY' => [ 'ECDSA' ],
 );
 
 sub read_private_pem {
@@ -89,7 +116,6 @@ sub read_private_pem {
 
 sub init;
 sub extract_public;
-sub dump_public;
 sub as_blob;
 sub equal;
 sub size;
@@ -110,7 +136,16 @@ sub _fp_bubblebabble {
     bubblebabble( Digest => sha1($_[0]) )
 }
 
+sub comment {
+    my $key = shift;
+    my $comment = shift;
+    $key->{comment} = $comment if defined $comment;
+    $key->{comment};
+}
+
 sub _fp_hex { join ':', map { sprintf "%02x", ord } split //, md5($_[0]) }
+
+sub dump_public { join ' ', grep { defined } $_[0]->ssh_name, encode_b64( $_[0]->as_blob ), $_[0]->comment }
 
 1;
 __END__
@@ -127,18 +162,19 @@ Net::SSH::Perl::Key - Public or private key abstraction
 =head1 DESCRIPTION
 
 I<Net::SSH::Perl::Key> implements an abstract base class interface
-to key objects (either DSA, RSA, or Ed25519 keys, currently). The
-underlying implementation for RSA is an internal, hash-reference
-implementation.  The DSA implementation uses I<Crypt::DSA>, and
-the Ed25519 implementation uses I<Crypt::Ed25519>.
+to key objects (either DSA, RSA, ECDSA, or Ed25519 keys, currently).
+The underlying implementation for RSA, DSA, an ECDSA keys is the
+CryptX module.  The Ed25519 implementation uses bundled XS and C code
+from the SUPERCOP ref10 implementation.
 
 =head1 USAGE
 
 =head2 Net::SSH::Perl::Key->new($key_type [, $blob [, $compat_flag_ref ]])
 
 Creates a new object of type I<Net::SSH::Perl::Key::$key_type>,
-after loading the class implementing I<$key_type>. I<$key_type>
-should be C<DSA>, C<RSA1>, or C<Ed25519>.  
+after loading the class implementing I<$key_type>.
+should be C<DSA>, C<RSA1>, C<RSA>, C<ECDSA256>, C<ECDSA384>, C<ECDSA521>,
+or C<Ed25519>.  
 
 I<$blob>, if present, should be a string representation of the key,
 from which the key object can be initialized. In fact, it should
@@ -168,24 +204,24 @@ passphrase, this might be a good time to ask the user for the
 actual passphrase. :)
 
 Returns the new key object, which is blessed into the subclass
-denoted by I<$key_type> (either C<DSA>, C<RSA1> or C<Ed25519>).
+denoted by I<$key_type> (C<DSA>, C<RSA1>, C<ECDSA> or C<Ed25519>).
 
 =head2 Net::SSH::Perl::Key->keygen($key_type, $bits)
 
-$key_type is either RSA or DSA.  Generates a new DSA or RSA key 
-and returns that key. The key returned is the private key, which
-(presumably) contains all of the public key data, as well. I<$bits>
- is the number of bits in the key.
+$key_type is one of RSA, DSA, or ECDSA256/ECDSA384/ECDSA521.
+Generates a new key and returns that key. The key returned is the 
+private key, which (presumably) contains all of the public key
+data, as well. I<$bits> is the number of bits in the key.
 
 Your I<$key_type> implementation may not support key generation;
 if not, calling this method is a fatal error.
 
 Returns the new key object, which is blessed into the subclass
-denoted by I<$key_type> (either C<DSA> or C<RSA1>).
+denoted by I<$key_type>
 
-=head2 Net::SSH::Perl::Key->keygen('Ed25519' [,$comment])
+=head2 Net::SSH::Perl::Key->keygen('Ed25519')
 
-Generates a new Ed25519 key with an optional comment.
+Generates a new Ed25519 key.  Ed25519 keys have fixed key length.
 
 Returns the new key object, which is bless into the Ed25519
 subclass.
@@ -199,7 +235,7 @@ extract public keys out of entries in F<known_hosts> and public
 identity files.
 
 Returns the new key object, which is blessed into the subclass
-denoted by I<$key_type> (either C<DSA> or C<RSA1>).
+denoted by I<$key_type>
 
 =head2 $key->write_private([ $file [, $pass, $ciphername, $rounds] ])
 

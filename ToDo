@@ -9,14 +9,6 @@ Fixes to SSH2 implementation:
 
 Compatibility with NetScreen?
 
-Switch over to using Crypt::RSA for SSH1 RSA implementation?
-SSH2 RSA keys now use Crypt::RSA; at this point it might just
-be too much extra baggage to try to force people to use
-Crypt::RSA, because it has so many prereqs.
-
-Switch completely to Math::Pari? Worthwhile? Again, don't
-want existing SSH1 users to have to switch.
-
 Use non-blocking connect, like IO::Socket, to implement a
 connect Timeout.
 

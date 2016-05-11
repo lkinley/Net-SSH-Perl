@@ -2,13 +2,12 @@ package Net::SSH::Perl::Key::Ed25519;
 use strict;
 
 use Net::SSH::Perl::Buffer;
-use Net::SSH::Perl::Constants qw( SSH_COMPAT_BUG_SIGBLOB );
 use Crypt::Digest::SHA512 qw( sha512 );
 
 use base qw( Net::SSH::Perl::Key );
 
 use Crypt::PRNG qw( random_bytes );
-use Crypt::Misc qw( :all );
+use Crypt::Misc qw( decode_b64 encode_b64 );
 use Carp qw( croak );
 
 use constant MARK_BEGIN => "-----BEGIN OPENSSH PRIVATE KEY-----\n";
@@ -21,8 +20,10 @@ use constant DEFAULT_ROUNDS => 16;
 use constant DEFAULT_CIPHERNAME => 'aes256-cbc';
 use constant KDFNAME => 'bcrypt';
 
-use XSLoader;
-XSLoader::load('Net::SSH::Perl');
+unless (grep /^Net::SSH::Perl$/, @DynaLoader::dl_modules) {
+        use XSLoader;
+        XSLoader::load('Net::SSH::Perl');
+}
 
 sub ssh_name { 'ssh-ed25519' }
 
@@ -43,7 +44,6 @@ sub init {
 sub keygen {
     my $class = shift;
     my $key = __PACKAGE__->new(undef);
-    $key->{comment} = shift;
     my $secret = random_bytes(ED25519_PK_SZ);
     ($key->{pub},$key->{priv}) = ed25519_generate_keypair($secret);
     $key;
@@ -145,7 +145,7 @@ sub read_private {
     }
 
     my $key = __PACKAGE__->new(undef);
-    $key->{comment} = $comment;
+    $key->comment($comment);
     $key->{pub} = $pub_key;
     $key->{priv} = $priv_key;
     $key;
@@ -208,7 +208,7 @@ sub write_private {
     $kb->put_str($key->ssh_name);
     $kb->put_str($key->{pub});
     $kb->put_str($key->{priv});
-    $kb->put_str($key->{comment});
+    $kb->put_str($key->comment);
     if (my $r = length($kb->bytes) % $blocksize) {
          $kb->put_char(chr($_)) foreach (1..$blocksize-$r);
     }
@@ -223,13 +223,6 @@ sub write_private {
     print FH encode_b64($b->bytes),"\n"; 
     print FH MARK_END;
     close FH;
-}
-
-sub dump_public {
-    my $key = shift;
-    my $pub = $key->ssh_name . ' ' . encode_b64( $key->as_blob );
-    $pub .= ' ' . $key->{comment} if defined $key->{comment};
-    $pub
 }
 
 sub sign {
