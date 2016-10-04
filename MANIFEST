@@ -49,7 +49,10 @@ lib/Net/SSH/Perl/Handle.pm
 lib/Net/SSH/Perl/Kex/C25519.pm
 lib/Net/SSH/Perl/Kex/DH.pm
 lib/Net/SSH/Perl/Kex/DH1.pm
-lib/Net/SSH/Perl/Kex/DH14.pm
+lib/Net/SSH/Perl/Kex/DH14SHA1.pm
+lib/Net/SSH/Perl/Kex/DH14SHA256.pm
+lib/Net/SSH/Perl/Kex/DH16SHA512.pm
+lib/Net/SSH/Perl/Kex/DH18SHA512.pm
 lib/Net/SSH/Perl/Kex/DHGEX.pm
 lib/Net/SSH/Perl/Kex/DHGEXSHA1.pm
 lib/Net/SSH/Perl/Kex/DHGEXSHA256.pm

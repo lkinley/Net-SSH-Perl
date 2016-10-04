@@ -226,7 +226,10 @@ sub choose_kex {
         &KEX_CURVE25519_SHA256 => 'C25519',
         &KEX_DH_GEX_SHA256     => 'DHGEXSHA256',
         &KEX_DH_GEX_SHA1       => 'DHGEXSHA1',
-        &KEX_DH14              => 'DH14',
+        &KEX_DH14_SHA1         => 'DH14SHA1',
+        &KEX_DH14_SHA256       => 'DH14SHA256',
+        &KEX_DH16_SHA512       => 'DH16SHA512',
+        &KEX_DH18_SHA512       => 'DH18SHA512',
         &KEX_DH1               => 'DH1'
     );
     if (my $pkg = $kexmap{$name}) {

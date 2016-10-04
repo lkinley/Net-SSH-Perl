@@ -7,10 +7,17 @@ use warnings;
 
 use Carp qw( croak );
 use Crypt::PK::DH;
+use Crypt::Digest::SHA1 qw( sha1 );
 
 use base qw( Net::SSH::Perl::Kex::DH );
 
 sub group { 1 }
+sub hash_len { 20 }
+
+sub hash {
+    my $kex = shift;
+    sha1(join('',@_));
+}
 
 sub _dh_new_group {
     my $kex = shift;
@@ -25,6 +32,7 @@ __END__
 =head1 NAME
 
 Net::SSH::Perl::Kex::DH1 - Diffie-Hellman Group 1 Key Exchange
+(RFC2409 "Second Oakley Group" 1024-bit)
 
 =head1 SYNOPSIS
 
@@ -45,7 +53,7 @@ to produce a shared secret key between client and server, without
 ever sending the shared secret over the insecure network. All that is
 sent are the client and server public keys.
 
-I<Net::SSH::Perl::Kex::DH1> uses I<Crypt::DH> for the Diffie-Hellman
+I<Net::SSH::Perl::Kex::DH1> uses CryptX for the Diffie-Hellman
 implementation. The I<p> value is set to
 
       FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1

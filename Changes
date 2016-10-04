@@ -1,5 +1,14 @@
 Revision history for Net::SSH::Perl
 
+2.06 2016.10.04
+
+    - Add support for additional fixed Diffie-Hellman 2K, 4K and 8K groups
+      from OpenSSH 7.3 (draft-ietf-curdle-ssh-kex-sha2-03)
+    - Kex defaults now updated to draft-ietf-curdle-ssh-kex-sha2-03
+      recommendations (diffie-hellman-group-exchange-sha1 removed)
+      It can re-enabled by passing the option:
+      'KexAlgorithms +diffie-hellman-group-exchange-sha1'
+
 2.05 2016.10.03
 
     - Add support for '+" syntax in Ciphers, KexAlgorithms, HostKeyAlgorithms

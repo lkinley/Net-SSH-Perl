@@ -10,10 +10,8 @@ use Net::SSH::Perl::Constants qw( :msg2 :kex );
 use Net::SSH::Perl::Key;
 
 use Carp qw( croak );
-use Crypt::Digest::SHA1 qw( sha1 );
 use Scalar::Util qw(weaken);
 
-use Net::SSH::Perl::Kex;
 use base qw( Net::SSH::Perl::Kex );
 
 sub new {
@@ -98,16 +96,16 @@ sub kex_hash {
     $b->put_mp_int($s_dh_pub);
     $b->put_mp_int($shared_secret);
 
-    sha1($b->bytes);
+    $kex->hash($b->bytes);
 }
 
 sub derive_key {
     my($kex, $id, $need, $hash, $shared_secret, $session_id) = @_;
     my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
     $b->put_mp_int($shared_secret);
-    my $digest = sha1($b->bytes, $hash, chr($id), $session_id);
-    for (my $have = 20; $need > $have; $have += 20) {
-        $digest .= sha1($b->bytes, $hash, $digest);
+    my $digest = $kex->hash($b->bytes, $hash, chr($id), $session_id);
+    for (my $have = $kex->hash_len; $need > $have; $have += $kex->hash_len) {
+        $digest .= $kex->hash($b->bytes, $hash, $digest);
     }
     $digest;
 }
@@ -121,7 +119,8 @@ Net::SSH::Perl::Kex::DH - Diffie-Hellman Group Agnostic Key Exchange
 
 =head1 SYNOPSIS
 	
-    # This class should not be used directly, but rather as a base for DH1, DH14, etc 
+    # This class should not be used directly, but rather as a base for DH1,
+    # DH14SHA1, DH16SHA512, etc 
 
     use Net::SSH::Perl::Kex::DH;
     use base qw( Net::SSH::Perl::Kex::DH );

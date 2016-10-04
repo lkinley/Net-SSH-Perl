@@ -1,4 +1,4 @@
-package Net::SSH::Perl::Kex::DH14;
+package Net::SSH::Perl::Kex::DH14SHA1;
 
 use strict;
 use warnings;
@@ -6,8 +6,15 @@ use warnings;
 use base qw( Net::SSH::Perl::Kex::DH );
 use Carp qw( croak );
 use Crypt::PK::DH;
+use Crypt::Digest::SHA1 qw( sha1 );
 
-sub group { 14 }
+sub group { '14 SHA1' }
+sub hash_len { 20 }
+
+sub hash {
+    my $kex = shift;
+    sha1(join('',@_));
+}
 
 sub _dh_new_group {
     my $kex = shift;
@@ -21,20 +28,21 @@ __END__
 
 =head1 NAME
 
-Net::SSH::Perl::Kex::DH14 - Diffie-Hellman Group 14 Key Exchange
+Net::SSH::Perl::Kex::DH14SHA1 - Diffie-Hellman Group 14 Key Exchange
+(RFC3526 "2048-bit MODP Group")
 
 =head1 SYNOPSIS
 
     use Net::SSH::Perl::Kex;
     my $kex = Net::SSH::Perl::Kex->new;
-    my $dh14 = bless $kex, 'Net::SSH::Perl::Kex::DH14';
+    my $dh14 = bless $kex, 'Net::SSH::Perl::Kex::DH14SHA1';
 
     $dh14->exchange;
 
 =head1 DESCRIPTION
 
-I<Net::SSH::Perl::Kex::DH14> implements Diffie-Hellman Group 14 Key
-Exchange for I<Net::SSH::Perl>. It is a subclass of
+I<Net::SSH::Perl::Kex::DH14SHA1> implements Diffie-Hellman Group 14 SHA1
+Key Exchange for I<Net::SSH::Perl>. It is a subclass of
 I<Net::SSH::Perl::Kex>.
 
 Group 14 Key Exchange uses the Diffie-Hellman key exchange algorithm
@@ -42,7 +50,7 @@ to produce a shared secret key between client and server, without
 ever sending the shared secret over the insecure network. All that is
 sent are the client and server public keys.
 
-I<Net::SSH::Perl::Kex::DH14> uses I<Crypt::DH> for the Diffie-Hellman
+I<Net::SSH::Perl::Kex::DH14SHA1> uses CryptX for the Diffie-Hellman
 implementation. The I<p> value is set to
 
       FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1
