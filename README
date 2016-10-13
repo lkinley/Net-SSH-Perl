@@ -73,7 +73,7 @@ David Robins / dbrobins@cpan.org
 Support for the following features by:
 Lance Kinley / lkinley@loyaltymethods.com
 
-Diffie-Hellman Group 14 Key Exchange
+Diffie-Hellman Group 14, 16, and 18 Key Exchange
 Diffie-Hellman Group Exchange
 Curve25519 Key Exchange (curve25519-sha256@libssh.org)
 AES Cipher support (aes256-ctr,aes192-ctr,aes128-ctr)

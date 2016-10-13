@@ -1,5 +1,13 @@
 Revision history for Net::SSH::Perl
 
+2.07 2016.10.13
+
+    - Fix blowfish compilation on SunOS [CPAN bug #116323]
+    - Fix bug in Packet [CPAN bug #118335]
+    - Add support for '+' syntax in MACs option
+    - Remove hmac-sha1 from default MACs. It can re-enabled 
+      by passing the option: 'MACs +hmac-sha1'
+
 2.06 2016.10.04
 
     - Add support for additional fixed Diffie-Hellman 2K, 4K and 8K groups
@@ -11,7 +19,7 @@ Revision history for Net::SSH::Perl
 
 2.05 2016.10.03
 
-    - Add support for '+" syntax in Ciphers, KexAlgorithms, HostKeyAlgorithms
+    - Add support for '+' syntax in Ciphers, KexAlgorithms, HostKeyAlgorithms
       options as in OpenSSH
 
 2.04 2016.05.11

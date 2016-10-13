@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.78.
+signed via the Module::Signature module, version 0.81.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -15,14 +15,14 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA256
 
 SHA1 cc451367f759ef30c8200859b4248973a973b623 .perlcriticrc
-SHA1 d74bb3225f07620d98505930ba788e00695931ff Changes
+SHA1 4a30f3b6e56b450253d4c7c6d1e69278fafe57ad Changes
 SHA1 f235ba4160673bcb7c9d58c2f09dbc7fc0efadea LICENSE
 SHA1 701bf32f98dd1532d879b5b11d4a50e1d43ee7e1 MANIFEST
 SHA1 84efc47ee3a4253e0ab8029a26c263a6553beda7 MANIFEST.SKIP
-SHA1 47e1ec224f35412477acc344bb21998e4357e193 META.yml
+SHA1 0fae024f2d74f7fe9c4dd78861cc3bc99b69cfd6 META.yml
 SHA1 101b435e682e36691bd74fa3ab0edf8e6ea5a568 Makefile.PL
 SHA1 c87e9dfdc4402803b6be723dae91f3da509f2b19 Perl.xs
-SHA1 731f2d82158dbb30d17c3842a049c10cc3c54c1e README
+SHA1 6e0385b8c008291d06f4ce184a893a0e7391f9ae README
 SHA1 db019f46625b47591742b6eeacb28b031e3b1634 ToDo
 SHA1 54db75321e7819c82be772cf92feb7ae09b2389c eg/cmd.pl
 SHA1 02bc5d589eb15f36d6a971440f9636184f7a0279 eg/pscp
@@ -30,7 +30,7 @@ SHA1 44ce715b8029f44123388bbc0fe50cea4334dc79 eg/pssh
 SHA1 3a7ecc57b316a02a72f8f56602b6d59aa4a4c2ce eg/pssh-keygen
 SHA1 c36af8adc7bcc9ccbef3beed15723a4a0e8db15a eg/remoteinteract.pl
 SHA1 7ff227ceb0c28c8f98b5772072eb6bf908f96555 eg/remoteinteract2.pl
-SHA1 a822d4eb1513f5dc2d735f04d59728c1aa866b95 lib/Net/SSH/Perl.pm
+SHA1 5effe0001402a132eb8bd389e7eebbcbe2a0734a lib/Net/SSH/Perl.pm
 SHA1 839a821af6043d4a7b95ca6b535259615c0e04bd lib/Net/SSH/Perl/Agent.pm
 SHA1 fcaf17a31c625344a591f0fd42a033ebbcbd31b4 lib/Net/SSH/Perl/Auth.pm
 SHA1 9b539c1489f9cc3d3f6dcb8281f4af3fdf3ba52f lib/Net/SSH/Perl/Auth/ChallengeResponse.pm
@@ -67,11 +67,11 @@ SHA1 21344b8bd2cb9ba9c5cd0f522ee3dd28c503407e lib/Net/SSH/Perl/Cipher/RC4.pm
 SHA1 a83a82f4225f9c3c3fb1d2ce987c5b26c4840430 lib/Net/SSH/Perl/Comp.pm
 SHA1 e82ab42ea92f64bbe5773fb953a58cf967167682 lib/Net/SSH/Perl/Comp/Zlib.pm
 SHA1 5df757bdc470ec5bd631dca5f9f289efe7242092 lib/Net/SSH/Perl/Config.pm
-SHA1 95250b883335185766079ebf025c7ecc0c37b6c2 lib/Net/SSH/Perl/Constants.pm
+SHA1 5b94f57eb2bdacf411f695b70cde9e9873a9dbb6 lib/Net/SSH/Perl/Constants.pm
 SHA1 b1ee21fcdfbf4e94eadf36e9e2d95f6a01f73732 lib/Net/SSH/Perl/Handle.pm
 SHA1 9e80b0602ed189e37f8728a08419a5ca99f9f30a lib/Net/SSH/Perl/Handle/SSH1.pm
 SHA1 999d57d14d7b8ebbbf6f882f9456518f69dd468f lib/Net/SSH/Perl/Handle/SSH2.pm
-SHA1 e948a6977f18b7c17a20968b9b3dd05718d253b7 lib/Net/SSH/Perl/Kex.pm
+SHA1 4f8e495cc9ae510dda5107debaef700329de4322 lib/Net/SSH/Perl/Kex.pm
 SHA1 702210a6e038ffcafc005b27b4e6cd1de9281e58 lib/Net/SSH/Perl/Kex/C25519.pm
 SHA1 a211c47863bdac01f5438f3c73a2ebf387a5d1ef lib/Net/SSH/Perl/Kex/DH.pm
 SHA1 d21f839cbf545ba6607934a8d7b8b22651dc78e7 lib/Net/SSH/Perl/Kex/DH1.pm
@@ -93,7 +93,7 @@ SHA1 470575326333cbff8a36e4785d7cdb88b92b2ad1 lib/Net/SSH/Perl/Key/Ed25519.xs
 SHA1 7e14cbe1d46907224f6ab3b4ba39781a95798f77 lib/Net/SSH/Perl/Key/RSA.pm
 SHA1 ba45cd950b22a2b388b111752b58c207034cdcb7 lib/Net/SSH/Perl/Key/RSA1.pm
 SHA1 23b05df245f17438ed4c206a033302415715e720 lib/Net/SSH/Perl/Mac.pm
-SHA1 c2a6cc36e71a793255dd2acd7b8484c067426a2f lib/Net/SSH/Perl/Packet.pm
+SHA1 ab83fb83d214b16fe6a410d9c6fb4b121d9083b9 lib/Net/SSH/Perl/Packet.pm
 SHA1 32c885d48ae7296def3c50437ace63e531c5c899 lib/Net/SSH/Perl/Proxy.pm
 SHA1 08263fff918ef4785fe9523436d70b68603714f7 lib/Net/SSH/Perl/SSH1.pm
 SHA1 ead0d6ca19288e53699981b710ef5f4d8abb92a6 lib/Net/SSH/Perl/SSH2.pm
@@ -108,7 +108,7 @@ SHA1 428908846951998f302ef1f77115bd8c436ecac0 lib/Net/SSH/Perl/Util/SSH1Misc.pm
 SHA1 9f28e16409d1139b2d8f14a369137a851d379a09 lib/Net/SSH/Perl/Util/Term.pm
 SHA1 265e3a3334172d419de00fef1b5c1d362004de26 lib/Net/SSH/Perl/Util/Win32.pm
 SHA1 2adb5cbc9065eea047f857161ca99f611a422216 ppport.h
-SHA1 2916b5253a303661dac4537b2874043fe157dfc9 src/blowfish/blf.h
+SHA1 0c1a83c415c58abb94cd6ba1e0ad684f9f010a4b src/blowfish/blf.h
 SHA1 0f65172acc5d0d8b02ad53eeedd4c533de1501f5 src/blowfish/blowfish.c
 SHA1 ba66dee5448ea2c731702ff91ddf66825ab57707 src/chacha/chacha.c
 SHA1 4da3376e0c343510ed233aed446aff99fe3cd9e1 src/chacha/chacha.h
@@ -150,11 +150,11 @@ SHA1 8e534dcfd84bcb03c1964587d8d25313771e10c0 typemap
 -----BEGIN PGP SIGNATURE-----
 Comment: GPGTools - http://gpgtools.org
 
-iQEcBAEBCAAGBQJX8+m3AAoJEC3vSbXAsR2+ltYH+gPQDNCvqzIe14p7c8B76zbR
-jc076gk6ag3zDZgWluDnCkfKXvpun8qCmLGN0hTDp2HnvoqNmT9IP3iRVaD3AEys
-bzWNh/suRIQ7qQvV6fXyvWlY5ZfL2swWdNxDnCxE4jvu8fWvVQUVvJ8qG8HRk9Jz
-w6GaKDRsnhHYxXzu2iv0w0LSJIu1HFN5IYQ39CWa0s0brdahHzLFN7QpvpybXM8W
-RKvQ0IHdH/+zh8Tv/fmZzxu/TeKYlPJhIGMniFbL0yLmD4GupcT4X8M6hA+/Yd1T
-7hGFJRQQj1QQ1bhu84vS2hFt2dvJgn7DwyMaeyfcwTpRCA1CoWMonSqoIXssaak=
-=xK8O
+iQEcBAEBCAAGBQJX//YFAAoJEC3vSbXAsR2+VlwH/0VAPi2IdDpwhBDZC4fZ08Bu
+V6j91qu1oYFgslo+ZrmmU35Vrb4N2K8IQOoMldtkmWtxguIj1BUGjCaLkhvL/MXr
+KOoQ0lCBgDa+HOlfSc6Xmu+hoxyp3SPM7hqSMd5qFkKbY2o0LBpX5h9IC5Pw37iV
+VAoRwg3dQdsU4yS7Xtv2uL/2PcnlMwGhxfL2Ry3u2bc+JYMIBe6eqclth/XNNW30
+1/Ne8TACNpHR/jF8qldEI4e2ygiFRNBF58xzjlmugWL47kdtGLp4g+COXyhDMY6O
+dF5gch3FIQb/Ie2L+4qcWCS6XA98kWaa+k5+vNT01FFBeHgJrMIkU9cW3fLC+8c=
+=xz+S
 -----END PGP SIGNATURE-----

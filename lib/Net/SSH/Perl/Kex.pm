@@ -93,6 +93,7 @@ sub exchange {
     $proposal[ PROPOSAL_KEX_ALGS ] .= ',ext-info-c'
         if $proposal[ PROPOSAL_KEX_ALGS ] !~ /ext-info-c/;
     if (my $macs = $ssh->config->get('macs')) {
+        $macs = KEX_DEFAULT_MAC . "," . $macs if $macs =~ s/^\+//;
         $proposal[ PROPOSAL_MAC_ALGS_CTOS ] = 
         $proposal[ PROPOSAL_MAC_ALGS_STOC ] = $macs;
     }
