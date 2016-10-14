@@ -43,6 +43,36 @@ Then install it:
 
     % make install
 
+USAGE NOTES
+
+The goal for V2 was to implement the latest SSH features while
+providing very secure defaults.
+
+The following Ciphers are available but not enabled by default
+for SSH2 connections:
+  - Legacy ciphers arcfour, blowfish, DES, DES3, IDEA, RC4
+    (All considered obsolete and insecure)
+  - AES in CBC mode
+
+To enable AES256 in CBC mode, for example, pass the option:
+'Ciphers +aes256-cbc' to Net::SSH::Perl->new().
+
+The following Key Exchange (KEX) mechanisms are disabled by
+default:
+  - diffie-hellman-group1-sha1
+  - diffie-hellman-group14-sha1
+  - diffie-hellman-group-exchange-sha1
+
+One can enable via the "KexAlgorithms" option.  For example:
+'KexAlgorithms +diffie-hellman-group1-sha1'
+
+The following MACs are disabled by default:
+  - hmac-md5
+  - hmac-sha1
+
+One can enable via the "MACs" option.  For example:
+'MACs +hmac-sha1'
+
 SAMPLES/TUTORIALS
 
 Take a look at the scripts in eg/ for help and examples of

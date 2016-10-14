@@ -1,5 +1,12 @@
 Revision history for Net::SSH::Perl
 
+2.08 2016.10.14
+    - Use sha512 instead of md5 in Net::SSH::Perl::Cipher->new_from_key_str()
+      to provide ChachaPoly with enough key material
+      Tests in t/05-cipher.t should now pass on all platforms [ CPAN bug #114077 ]
+    - Add AES128_CBC to cipher tests
+    - Info on using features not enabled by default added to README
+
 2.07 2016.10.13
 
     - Fix blowfish compilation on SunOS [CPAN bug #116323]

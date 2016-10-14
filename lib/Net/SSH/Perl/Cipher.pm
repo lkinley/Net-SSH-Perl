@@ -5,6 +5,7 @@ package Net::SSH::Perl::Cipher;
 use strict;
 use warnings;
 use Carp qw( croak );
+use Crypt::Digest::SHA512 qw( sha512 );
 
 use vars qw( %CIPHERS %CIPHERS_SSH2 %CIPH_REVERSE %SUPPORTED );
 BEGIN {
@@ -65,9 +66,8 @@ sub new {
 
 sub new_from_key_str {
     my $class = shift;
-    eval "use Crypt::Digest::MD5 qw( md5 );";
     defined $_[1] ?
-        $class->new($_[0], md5($_[1])) :
+        $class->new($_[0], sha512($_[1])) :
         $class->new(@_);
 }
 
