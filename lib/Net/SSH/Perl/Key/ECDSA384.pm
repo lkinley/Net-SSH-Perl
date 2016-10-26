@@ -10,4 +10,6 @@ sub digest { 'SHA384' }
 
 sub siglen { 48 }
 
+sub keygen { shift->SUPER::keygen(384) }
+
 1;

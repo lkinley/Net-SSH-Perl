@@ -27,7 +27,7 @@ eval {
     $HOSTNAME = hostname();
 };
 
-$VERSION = '2.08';
+$VERSION = '2.09';
 
 sub VERSION { $VERSION }
 
@@ -398,21 +398,25 @@ sub packet_start { Net::SSH::Perl::Packet->new($_[0], type => $_[1]) }
 sub check_host_key {
     my $ssh = shift;
     my($key, $host, $u_hostfile, $s_hostfile) = @_;
-    my $strict_host_key_checking = $ssh->{config}->get('strict_host_key_checking');
-    $strict_host_key_checking ||= 'no';
+    my $strict_host_key_checking =
+        $ssh->{config}->get('strict_host_key_checking') || 'no';
     $host ||= $ssh->{host};
     $u_hostfile ||= $ssh->{config}->get('user_known_hosts');
     $s_hostfile ||= $ssh->{config}->get('global_known_hosts');
     my $port = $ssh->{config}->get('port');
+
     if (defined $port && $port =~ /\D/) {
         my @serv = getservbyname(my $serv = $port, 'tcp');
         $port = $serv[2];
     }
-    $host = "[$host]:$port" if defined $port && $port != 22;
 
-    my $status = _check_host_in_hostfile($host, $u_hostfile, $key);
+    my $hash_known_hosts = $ssh->{config}->get('hash_known_hosts');
+    my $check_ip = $ssh->{config}->get('check_host_ip');
+    $check_ip = 1 unless defined $check_ip;
+
+    my $status = _check_host_in_hostfile($host, $port, $u_hostfile, $key);
     unless (defined $status && ($status == HOST_OK || $status == HOST_CHANGED)) {
-        $status = _check_host_in_hostfile($host, $s_hostfile, $key);
+        $status = _check_host_in_hostfile($host, $port, $s_hostfile, $key);
     }
 
     if ($status == HOST_OK) {
@@ -425,17 +429,36 @@ sub check_host_key {
             }
             my $prompt =
 qq(The authenticity of host '$host' can't be established.
-Key fingerprint is @{[ $key->fingerprint ]}.
+Key fingerprint is @{[ $key->fingerprint($ssh->config->get('fingerprint_hash')) ]}.
 Are you sure you want to continue connecting (yes/no)?);
             unless (_read_yes_or_no($prompt, "yes")) {
                 croak "Aborted by user!";
             }
         }
+        _add_host_to_hostfile($host, $port, $u_hostfile, $key, $hash_known_hosts);
         $ssh->debug("Permanently added '$host' to the list of known hosts.");
-        _add_host_to_hostfile($host, $u_hostfile, $key, $ssh->{config}->get('hash_known_hosts'));
     }
     else {
         croak "Host key for '$host' has changed!";
+    }
+
+    return unless $check_ip && $host =~ /[a-z][A-Z]+/;
+    my $ip = inet_ntoa(inet_aton($host)) or return;
+
+    $status = _check_host_in_hostfile($ip, $port, $u_hostfile, $key);
+    unless (defined $status && ($status == HOST_OK || $status == HOST_CHANGED)) {
+        $status = _check_host_in_hostfile($ip, $port, $s_hostfile, $key);
+    }
+    if ($status == HOST_NEW) {
+        _add_host_to_hostfile($ip, $port, $u_hostfile, $key, $hash_known_hosts);
+    }
+    elsif ($status == HOST_CHANGED) {
+        my $prompt =
+qq(The host key for IP address '$ip' does not match that for '$host'.
+Are you sure you want to continue connecting (yes/no)?);
+        unless (_read_yes_or_no($prompt, "yes")) {
+            croak "Aborted by user!";
+        }
     }
 }
 
@@ -469,7 +492,7 @@ of the SSH protocol, and makes use of external Perl libraries (in
 the Crypt:: family of modules) to handle encryption of all data sent
 across the insecure network. It can also read your existing SSH
 configuration files (F</etc/ssh_config>, etc.), RSA identity files,
-DSA identity files, known hosts files, etc.
+ECDSA identity files, Ed25519 identity files, known hosts files, etc.
 
 One advantage to using I<Net::SSH::Perl> over wrapper-style
 implementations of ssh clients is that it saves on process
@@ -493,13 +516,27 @@ also be fully compatible with the "official" SSH implementation. If
 you find an SSH2 implementation that is not compatible with
 I<Net::SSH::Perl>, please let me know (email address down in
 I<AUTHOR & COPYRIGHTS>); it turns out that some SSH2 implementations
-have subtle differences from others. 3DES (C<3des-cbc>), Blowfish
-(C<blowfish-cbc>), and RC4 (C<arcfour>) ciphers are currently
-supported for SSH2 encryption, and integrity checking is performed
-by either the C<hmac-sha1> or C<hmac-md5> algorithms. Compression, if
-requested, is limited to Zlib. Supported server host key algorithms
-are C<ssh-dss> (the default) and C<ssh-rsa> (requires I<Crypt::RSA>);
-supported SSH2 public key authentication algorithms are the same.
+have subtle differences from others. AES-CTR (C<aes256-ctr>, 
+C<aes192-ctr>, and C<aes128-ctr>) and Chacha20-Poly1305 ciphers are 
+currently supported for SSH2 encryption.  Deprecated ciphers 
+AES-CBC (C<aes256-cbc>, C<aes192-cbc>, and C<aes128-cbc>) 3DES 
+(C<3des-cbc>), Blowfish (C<blowfish-cbc>), and RC4 (C<arcfour>)
+are available but not enabled by default.
+
+Integrity checking is performed by the C<hmac-sha2-256>, 
+C<hmac-sha2-512>, C<hmac-sha2-256-etm@openssh.com>, or
+C<hmac-sha2-512-etm@openssh.com> algorithms.  The deprecated C<hmac-sha1>
+or C<hmac-md5> algorithms are available but not enabled by default.
+
+Compression, if requested, is limited to Zlib. 
+
+Supported server host key algorithms are C<ssh-ed25519>, C<rsa-sha2-512>,
+C<rsa-sha2-256>, C<ecdsa-sha2-nistp521>, C<ecdsa-sha2-nistp384>,
+C<ecdsa-sha2-nistp256>, and C<ssh-rsa>.  Deprecated C<ssh-dss> is 
+supported but not enabled by default.
+
+Supported SSH2 public key authentication algorithms are the same.
+
 
 If you're looking for SFTP support, take a look at I<Net::SFTP>,
 which provides a full-featured Perl implementation of SFTP, and
@@ -547,11 +584,15 @@ ciphers; specifying an unsupported cipher will give you an error
 when you enter algorithm negotiation (in either SSH-1 or SSH-2).
 
 In SSH-1, the supported cipher names are I<IDEA>, I<DES>, I<DES3>,
-and I<Blowfish>; in SSH-2, the supported ciphers are I<arcfour>,
-I<blowfish-cbc>, and I<3des-cbc>.
+and I<Blowfish>; in SSH-2, the supported ciphers are I<aes256-ctr>,
+I<aes192-ctr>, I<aes128-ctr>, I<chacha20-poly1305@openssh.com>.
+I<arcfour>, I<blowfish-cbc>, and I<3des-cbc> are deprecated and
+are not enabled by default.
+I<aes256-cbc>, I<aes192-cbc>, and I<aes128-cbc> are also supported
+but not enabled by default as CBC is no longer considered secure.
 
-The default SSH-1 cipher is I<IDEA>; the default SSH-2 cipher is
-I<3des-cbc>.
+The default SSH-1 cipher is I<IDEA>; the default SSH-2 ciphers are
+I<aes256-ctr>, I<aes192-ctr>, I<aes128-ctr>, I<chacha20-poly1305@openssh.com>.
 
 =item * ciphers
 
@@ -563,7 +604,8 @@ I<Cipher>. This also applies only in SSH-2.
 This should be a comma-separated list of SSH-2 cipher names; the list
 of cipher names is listed above in I<cipher>.
 
-This defaults to I<3des-cbc,blowfish-cbc,arcfour>.
+This defaults to:
+I<chacha20-poly1305@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr>.
 
 =item * port
 
@@ -604,15 +646,16 @@ be set to true. Otherwise it defaults to false.
 
 =item * identity_files
 
-A list of RSA/DSA identity files to be used in RSA/DSA authentication.
+A list of identity files to be used in pubkey authentication.
 The value of this argument should be a reference to an array of
 strings, each string identifying the location of an identity
 file. Each identity file will be tested against the server until
 the client finds one that authenticates successfully.
 
-If you don't provide this, RSA authentication defaults to using
-F<$ENV{HOME}/.ssh/identity>, and DSA authentication defaults to
-F<$ENV{HOME}/.ssh/id_dsa>.
+If you don't provide this, SSH1 authentication defaults to using
+F<$ENV{HOME}/.ssh/identity>, and SSH2 authentication defaults to
+the three files F<$ENV{HOME}/.ssh/id_ed25519>, F<$ENV{HOME}/.ssh/id_ecdsa>,
+and F<$ENV{HOME}/.ssh/id_rsa>.
 
 =item * strict_host_key_checking
 
@@ -953,23 +996,23 @@ for more details.
 For samples/tutorials, take a look at the scripts in F<eg/> in
 the distribution directory.
 
-There is a mailing list for development discussion and usage
-questions.  Posting is limited to subscribers only.  You can sign up
-at http://lists.sourceforge.net/lists/listinfo/ssh-sftp-perl-users
-
-Please report all bugs via rt.cpan.org at
-https://rt.cpan.org/NoAuth/ReportBug.html?Queue=net%3A%3Assh%3A%3Aperl
+Please report bugs at:
+https://github.com/lkinley/Net-SSH-Perl/issues
 
 =head1 AUTHOR
 
-Current maintainer is David Robins, dbrobins@cpan.org.
+Development on V2 by Lance Kinley
+lkinley@rythmos.com
 
-Previous maintainer was Dave Rolsky, autarch@urth.org.
+Previous maintainers were:
+David Robins, dbrobins@cpan.org
+Dave Rolsky, autarch@urth.org.
 
 Originally written by Benjamin Trott.
 
 =head1 COPYRIGHT
 
+Copyright (c) 2015-2016 Rythmos, Inc.
 Copyright (c) 2001-2003 Benjamin Trott, Copyright (c) 2003-2008 David
 Rolsky.  Copyright (c) David Robins.  All rights reserved.  This
 program is free software; you can redistribute it and/or modify it

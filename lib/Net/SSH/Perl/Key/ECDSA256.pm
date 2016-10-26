@@ -10,4 +10,6 @@ sub digest { 'SHA256' }
 
 sub siglen { 32 }
 
+sub keygen { shift->SUPER::keygen(256) }
+
 1;

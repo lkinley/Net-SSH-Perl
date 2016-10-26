@@ -30,7 +30,7 @@ sub init {
 sub keygen {
     my $class = shift;
     my($bits) = @_;
-    my $key = __PACKAGE__->new;
+    my $key = $class->new;
     $key->{ecdsa} = Crypt::PK::ECC->new;
     my $curve = 'nistp' . $bits;
     $key->{ecdsa}->generate_key($curve) or return;

@@ -167,7 +167,8 @@ sub _test_pubkey {
             unless $s_key->equal($key);
 
         $ssh->debug("Public key is accepted, signing data.");
-        $ssh->debug("Key fingerprint: " . $key->fingerprint);
+        $ssh->debug("Key fingerprint: " .
+            $key->fingerprint($ssh->config->get('fingerprint_hash')));
         my $sent = $auth->_sign_send_pubkey($s_key, $cb);
         $amgr->remove_handler(SSH2_MSG_USERAUTH_PK_OK);
 

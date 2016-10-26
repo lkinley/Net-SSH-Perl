@@ -64,7 +64,6 @@ sub exchange {
         }
     }
     if (my $cs = $ssh->config->get('ciphers')) {
-        $cs = KEX_DEFAULT_ENCRYPT . "," . $cs if $cs =~ s/^\+//;
         # SSH2 cipher names are different; for compatibility, we'll map
         # valid SSH1 ciphers to the SSH2 equivalent names
         if($ssh->protocol eq PROTOCOL_SSH2) {
@@ -83,17 +82,14 @@ sub exchange {
         $proposal[ PROPOSAL_COMP_ALGS_STOC ] = "none";
     }
     if (my $algos = $ssh->config->get('host_key_algorithms')) {
-        $algos = KEX_DEFAULT_PK_ALG . "," . $algos if $algos =~ s/^\+//;
         $proposal[ PROPOSAL_SERVER_HOST_KEY_ALGS ] = $algos;
     }
     if (my $algos = $ssh->config->get('kex_algorithms')) {
-        $algos = KEX_DEFAULT_KEX . "," . $algos if $algos =~ s/^\+//;
         $proposal[ PROPOSAL_KEX_ALGS ] = $algos;
     }
     $proposal[ PROPOSAL_KEX_ALGS ] .= ',ext-info-c'
         if $proposal[ PROPOSAL_KEX_ALGS ] !~ /ext-info-c/;
     if (my $macs = $ssh->config->get('macs')) {
-        $macs = KEX_DEFAULT_MAC . "," . $macs if $macs =~ s/^\+//;
         $proposal[ PROPOSAL_MAC_ALGS_CTOS ] = 
         $proposal[ PROPOSAL_MAC_ALGS_STOC ] = $macs;
     }

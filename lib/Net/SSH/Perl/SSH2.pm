@@ -8,12 +8,13 @@ use Net::SSH::Perl::Kex;
 use Net::SSH::Perl::ChannelMgr;
 use Net::SSH::Perl::Packet;
 use Net::SSH::Perl::Buffer;
-use Net::SSH::Perl::Constants qw( :protocol :msg2
-                                  CHAN_INPUT_CLOSED CHAN_INPUT_WAIT_DRAIN );
+use Net::SSH::Perl::Constants qw( :protocol :msg2 :hosts
+                                  CHAN_INPUT_CLOSED CHAN_INPUT_WAIT_DRAIN 
+                                  KEX_DEFAULT_PK_ALG );
 use Net::SSH::Perl::Cipher;
 use Net::SSH::Perl::AuthMgr;
 use Net::SSH::Perl::Comp;
-use Net::SSH::Perl::Util qw( :hosts :win32 );
+use Net::SSH::Perl::Util qw( :hosts :win32 _read_yes_or_no );
 
 use base qw( Net::SSH::Perl );
 
@@ -72,7 +73,8 @@ sub _proto_init {
     }
     unless (my $if = $config->get('identity_files')) {
         defined $home or croak "Cannot determine home directory, please set the environment variable HOME";
-        $config->set('identity_files', [ catfile($home, '.ssh', 'id_dsa') ]);
+        $config->set('identity_files', [ catfile($home, '.ssh', 'id_ed25519'), 
+            catfile($home, '.ssh', 'id_rsa'), catfile($home, '.ssh', 'id_ecdsa') ]);
     }
 
     for my $a (qw( password dsa kbd_interactive )) {
@@ -88,6 +90,151 @@ sub register_handler {
     $ssh->{client_handlers}{$type} = { code => $sub, extra => \@extra };
 }
 
+# handle SSH2_MSG_GLOBAL_REQUEST
+sub client_input_global_request {
+    my $ssh = shift;
+    my $pack = shift or return;
+    my $req = $pack->get_str;
+    my $want_reply = ord $pack->get_char;
+    my $success = 0;
+    $ssh->debug("Global Request: $req, want reply: $want_reply");
+    if ($req eq 'hostkeys-00@openssh.com') {
+        if ($ssh->config->get('hostkeys_seen')) {
+            die 'Server already sent hostkeys!';
+        }
+        my $update_host_keys = $ssh->config->get('update_host_keys') || 'no';
+        $success = $ssh->client_input_hostkeys($pack)
+           if $update_host_keys eq 'yes' || $update_host_keys eq 'ask';
+        $ssh->config->set('hostkeys_seen', 1);
+    }
+    if ($want_reply) {
+        my $packet = $ssh->packet_start(
+            $success ? SSH2_MSG_REQUEST_SUCCESS : SSH2_MSG_REQUEST_FAILURE
+        );
+        $packet->send;
+    }
+}
+
+# handle hostkeys-00@openssh.com global request from server
+sub client_input_hostkeys {
+    my $ssh = shift;
+    my $pack = shift;
+    my %keys;
+
+    use Net::SSH::Perl::Key;
+
+    my $fp_hash = $ssh->config->get('fingerprint_hash');
+    while ($pack->offset < $pack->length) {
+        my $blob = $pack->get_str;
+        my $key = Net::SSH::Perl::Key->new_from_blob($blob);
+        unless ($key) {
+            $ssh->debug("Invalid key sent by server");
+            next;
+        }
+
+        my @allowed_key_types = split(',',
+            $ssh->config->get('host_key_algorithms') || 
+            KEX_DEFAULT_PK_ALG);
+        my $key_type = $key->ssh_name;
+        $ssh->debug("Received $key_type key: " . $key->fingerprint($fp_hash));
+        unless (grep { /^$key_type$/ } @allowed_key_types) {
+            unless ($key_type eq 'ssh-rsa' && grep { /^rsa-sha2-/ } @allowed_key_types) {
+                $ssh->debug("$key_type key not permitted by HostkeyAlgorithms");
+                next;
+            }
+        }
+        my $fp = $key->fingerprint($fp_hash);
+        if (exists $keys{$fp}) {
+            $ssh->debug("Received duplicate $key_type key");
+            next;
+        }
+        $keys{$fp} = $key;
+    }
+    unless (%keys) {
+        $ssh->debug('Server sent no usable keys');
+        return 0;
+    }
+
+    my $host = $ssh->{host};
+    my $port = $ssh->{config}->get('port');
+    if (defined $port && $port =~ /\D/) {
+        my @serv = getservbyname(my $serv = $port, 'tcp');
+        $port = $serv[2];
+    }
+    my $u_hostfile = $ssh->{config}->get('user_known_hosts');
+    my %known_keys = map { $_->fingerprint($fp_hash) => $_ } 
+       _all_keys_for_host($host, $port, $u_hostfile);
+
+    my $retained = 0;
+    my @new_keys;
+    foreach my $fp (keys %keys) {
+        if ($known_keys{$fp}) {
+            $retained++;
+        } else {
+            push @new_keys, $keys{$fp};
+        }
+    }
+
+    my @deprecated_keys;
+    foreach my $fp (keys %known_keys) {
+        push @deprecated_keys, $known_keys{$fp} unless $keys{$fp};
+    }
+
+    $ssh->debug(scalar(keys(%keys)) . ' keys from server: ' . scalar(@new_keys) .
+        " new, $retained retained. " . scalar(@deprecated_keys) . ' to remove');
+
+    if ((@deprecated_keys || @new_keys) && $ssh->config->get('update_host_keys') eq 'ask') {
+        return 0 unless _read_yes_or_no("Update hostkeys in known hosts? (yes/no)", 'yes');
+    }
+    foreach my $key (@deprecated_keys) {
+        $ssh->debug('Removing deprecated ' . $key->ssh_name . 'key from known hosts');
+        _remove_host_from_hostfile($host, $port, $u_hostfile, $key);
+    }
+
+    if (@new_keys) {
+        my $packet = $ssh->packet_start(SSH2_MSG_GLOBAL_REQUEST);
+        $packet->put_str('hostkeys-prove-00@openssh.com');
+        $packet->put_char(chr(1));
+        foreach my $key (@new_keys) {
+            $packet->put_str($key->as_blob);
+        }
+        $packet->send;
+        $ssh->debug("Sent hostkeys-prove request");
+
+        my $sigbuf = Net::SSH::Perl::Packet->read($ssh);
+        unless ($sigbuf && $sigbuf->type == SSH2_MSG_REQUEST_SUCCESS) {
+            $ssh->debug("hostkeys-prove request failed");
+            return 0;
+        }
+        $ssh->debug("Got hostkeys-prove request success");
+        my @verified_keys;
+        foreach my $key (@new_keys) {
+            my $sig = $sigbuf->get_str;
+            # prepare signed data
+            my $data = Net::SSH::Perl::Buffer->new( MP => 'SSH2' );
+            $data->put_str('hostkeys-prove-00@openssh.com');
+            $data->put_str($ssh->session_id);
+            $data->put_str($key->as_blob);
+            # verify signature
+            unless ($key->verify($sig,$data->bytes)) {
+                $ssh->debug("Server failed to confirm ownership of " .
+                    "private " . $ssh->ssh_name . " host key");
+                next;
+            }
+            $ssh->debug('Learned new hostkey: ' . $key->ssh_name . ' ' . 
+                $key->fingerprint($fp_hash));
+            push @verified_keys, $key;
+        }
+        my %verified = map { $_->fingerprint($fp_hash) => 1 } @verified_keys;
+        my $hash_known_hosts = $ssh->config->get('hash_known_hosts');
+        foreach my $key (@verified_keys) {
+            $ssh->debug('Adding ' . $key->ssh_name . ' key to known hosts');
+            _add_host_to_hostfile($host, $port, $u_hostfile, $key, $hash_known_hosts);
+        }
+    }
+    return 1;
+}
+
 sub login {
     my $ssh = shift;
     $ssh->SUPER::login(@_);
@@ -101,8 +248,16 @@ sub login {
         local_maxpacket => 0, remote_name => 'client-session');
     $channel->open;
 
-    my $packet = Net::SSH::Perl::Packet->read_expect($ssh,
-        SSH2_MSG_CHANNEL_OPEN_CONFIRMATION);
+    # check if a global request was sent
+    my $packet = Net::SSH::Perl::Packet->read($ssh);
+    if ($packet && $packet->type == SSH2_MSG_GLOBAL_REQUEST) {
+        my $p = $packet;
+        $packet = Net::SSH::Perl::Packet->read_expect($ssh,
+            SSH2_MSG_CHANNEL_OPEN_CONFIRMATION);
+        $ssh->client_input_global_request($p);
+    } elsif ($packet->type != SSH2_MSG_CHANNEL_OPEN_CONFIRMATION) {
+        die "Unexpected " . $packet->type . " response!";
+    }
     $cmgr->input_open_confirmation($packet);
 
     unless ($suppress_shell) {

@@ -264,20 +264,7 @@ sub read_expect {
     my $pack = $class->read($ssh);
     if ($pack->type != $type) {
         if ($pack->type == SSH2_MSG_GLOBAL_REQUEST) {
-            # handle global request (they can come any time)
-            # XXX TODO
-            my $req = $pack->get_str;
-            $ssh->debug("Global Request: $req");
-            #if ($req eq 'hostkeys-00@openssh.com') {
-                #$pack->get_char;
-                #while ($pack->offset < $pack->length) {
-		    #my $blob = $pack->get_str;
-                    #next if $blob =~ /ecdsa/;
-                    #require Net::SSH::Perl::Key;
-		    #my $key = Net::SSH::Perl::Key->new_from_blob($blob);
-		    #$ssh->debug($key->dump_public);
-                #}
-            #}
+            $ssh->debug("Unprocessed global request encountered");
             # now repeat read_expect for expected type
             return $class->read_expect($ssh,$type);
         } else {

@@ -11,7 +11,9 @@ use vars qw( %FUNC_TO_MOD %EXPORT_TAGS );
     _compute_session_id       => 'SSH1MP',
     _mp_linearize             => 'SSH1MP',
     _check_host_in_hostfile   => 'Hosts',
+    _all_keys_for_host        => 'Hosts',
     _add_host_to_hostfile     => 'Hosts',
+    _remove_host_from_hostfile=> 'Hosts',
     _load_private_key         => 'Authfile',
     _load_public_key          => 'Authfile',
     _save_private_key         => 'Authfile',
@@ -26,7 +28,8 @@ use vars qw( %FUNC_TO_MOD %EXPORT_TAGS );
 );
 
 %EXPORT_TAGS = (
-    hosts    => [ qw( _check_host_in_hostfile _add_host_to_hostfile ) ],
+    hosts    => [ qw( _check_host_in_hostfile _all_keys_for_host 
+                      _add_host_to_hostfile _remove_host_from_hostfile ) ],
     rsa      => [ qw( _rsa_public_encrypt _rsa_private_decrypt
                       _respond_to_rsa_challenge ) ],
     ssh1mp   => [ qw( _compute_session_id _mp_linearize ) ],

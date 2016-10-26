@@ -4,6 +4,7 @@ package Net::SSH::Perl::Key;
 use strict;
 use warnings;
 
+use Crypt::Digest::SHA256 qw( sha256 );
 use Crypt::Digest::MD5 qw( md5 );
 use Crypt::Misc qw( encode_b64 decode_b64 );
 use Net::SSH::Perl::Buffer;
@@ -125,7 +126,10 @@ sub fingerprint {
     my($type) = @_;
     my $data = $key->fingerprint_raw;
     $type && $type eq 'bubblebabble' ?
-        _fp_bubblebabble($data) : _fp_hex($data);
+        _fp_bubblebabble($data) :
+        $type && $type eq 'md5' ? 
+          _fp_md5($data) :
+          _fp_sha256($data);
 }
 
 sub _fp_bubblebabble {
@@ -136,14 +140,15 @@ sub _fp_bubblebabble {
     bubblebabble( Digest => sha1($_[0]) )
 }
 
+sub _fp_sha256 { "SHA256:" . encode_b64(sha256(shift)) }
+sub _fp_md5 { join ':', map { sprintf "%02x", ord } split //, md5($_[0]) }
+
 sub comment {
     my $key = shift;
     my $comment = shift;
     $key->{comment} = $comment if defined $comment;
     $key->{comment};
 }
-
-sub _fp_hex { join ':', map { sprintf "%02x", ord } split //, md5($_[0]) }
 
 sub dump_public { join ' ', grep { defined } $_[0]->ssh_name, encode_b64( $_[0]->as_blob ), $_[0]->comment }
 
@@ -281,10 +286,13 @@ Returns the size (in bits) of the key I<$key>.
 =head2 $key->fingerprint([ I<$type> ])
 
 Returns a fingerprint of I<$key>. The default fingerprint is
-a hex representation; if I<$type> is equal to C<bubblebabble>,
-the Bubble Babble representation of the fingerprint is used
-instead. The former uses an I<MD5> digest of the public key,
-and the latter uses a I<SHA-1> digest.
+a SHA256 representation.  If I<$type> is equal to C<bubblebabble>,
+the Bubble Babble representation of the fingerprint is used. 
+If I<$type> is equal to C<hex>, a traditional hex representation
+is returned.
+
+The hex representation uses an I<MD5> digest of the public key,
+and the bubblebabble uses a I<SHA-1> digest.
 
 =head1 AUTHOR & COPYRIGHTS
 

@@ -4,7 +4,7 @@ package Net::SSH::Perl::Config;
 use strict;
 use warnings;
 
-use Net::SSH::Perl::Constants qw( :protocol );
+use Net::SSH::Perl::Constants qw( :protocol :kex );
 use vars qw( %DIRECTIVES $AUTOLOAD );
 use Carp qw( croak );
 
@@ -13,18 +13,20 @@ use Carp qw( croak );
     Host                    => [ \&_host ],
     BatchMode               => [ \&_batch_mode ],
     ChallengeResponseAuthentication => [ \&_set_yesno, 'auth_ch_res' ],
+    CheckHostIP             => [ \&_set_yesno, 'check_host_ip' ],
     Cipher                  => [ \&_cipher ],
-    Ciphers                 => [ \&_set_str, 'ciphers' ],
+    Ciphers                 => [ \&_set_str, 'ciphers', KEX_DEFAULT_ENCRYPT ],
     Compression             => [ \&_set_yesno, 'compression' ],
     CompressionLevel        => [ \&_set_str, 'compression_level' ],
     DSAAuthentication       => [ \&_set_yesno, 'auth_dsa' ],
+    FingerprintHash         => [ \&_set_str, 'fingerprint_hash' ],
     GlobalKnownHostsFile    => [ \&_set_str, 'global_known_hosts' ],
     HashKnownHosts          => [ \&_set_yesno, 'hash_known_hosts' ],
-    HostKeyAlgorithms       => [ \&_set_str, 'host_key_algorithms' ],
+    HostKeyAlgorithms       => [ \&_set_str, 'host_key_algorithms', KEX_DEFAULT_PK_ALG ],
     HostName                => [ \&_set_str, 'hostname' ],
     IdentityFile            => [ \&_identity_file ],
-    KexAlgorithms           => [ \&_set_str, 'kex_algorithms' ],
-    MACs                    => [ \&_set_str, 'macs' ],
+    KexAlgorithms           => [ \&_set_str, 'kex_algorithms', KEX_DEFAULT_KEX ],
+    MACs                    => [ \&_set_str, 'macs', KEX_DEFAULT_MAC ],
     NumberOfPasswordPrompts => [ \&_set_str, 'number_of_password_prompts' ],
     PasswordAuthentication  => [ \&_set_yesno, 'auth_password' ],
     PasswordPromptHost      => [ \&_set_yesno, 'password_prompt_host' ],
@@ -35,6 +37,7 @@ use Carp qw( croak );
     RhostsRSAAuthentication => [ \&_set_yesno, 'auth_rhosts_rsa' ],
     RSAAuthentication       => [ \&_set_yesno, 'auth_rsa' ],
     StrictHostKeyChecking   => [ \&_set_str, 'strict_host_key_checking' ],
+    UpdateHostKeys          => [ \&_set_str, 'update_host_keys' ],
     UsePrivilegedPort       => [ \&_set_yesno, 'privileged' ],
     User                    => [ \&_set_str, 'user' ],
     UserKnownHostsFile      => [ \&_set_str, 'user_known_hosts' ],
@@ -125,7 +128,8 @@ sub _protocol {
 sub _set_str {
     my($cfg, $key, $value) = @_;
     return if exists $cfg->{o}{ $DIRECTIVES{$key}[1] };
-    $cfg->{o}{ $DIRECTIVES{$key}[1] } = $value;
+    $cfg->{o}{ $DIRECTIVES{$key}[1] } = $value =~ s/^\+// ? 
+        $DIRECTIVES{$key}[2] . ',' . $value : $value;
 }
 
 {

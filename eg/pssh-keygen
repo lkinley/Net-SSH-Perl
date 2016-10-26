@@ -29,9 +29,31 @@ my %types = (
         name => 'RSA1',
         keyfile => 'identity',
     },
+    ecdsa521 => {
+        name => 'ECDSA521',
+        keyfile => 'id_ecdsa',
+    },
+    ecdsa384 => {
+        name => 'ECDSA384',
+        keyfile => 'id_ecdsa',
+    },
+    ecdsa256 => {
+        name => 'ECDSA256',
+        keyfile => 'id_ecdsa',
+    },
+    ed25519 => {
+        name => 'Ed25519',
+        keyfile => 'id_ed25519',
+    },
 );
 
-my $type = $opts{t} || 'rsa1';
+my $type = $opts{t} || 'rsa';
+$opts{b} ||= 2048 if $type eq 'rsa';
+$opts{b} ||= 521 if $type eq 'ecdsa';
+
+$type = $type . $opts{b} if $type eq 'ecdsa';
+delete $opts{b} unless $type =~ /^rsa/;
+
 my $key_type = $types{$type}{name};
 my $def_keyfile = "$SSH_DIR/$types{$type}{keyfile}";
 
@@ -111,7 +133,7 @@ elsif ($opts{X}) {
 }
 else {
     debug("Generating public/private $type key pair.");
-    my $key = Net::SSH::Perl::Key->keygen($key_type, $opts{b} || 1024);
+    my $key = Net::SSH::Perl::Key->keygen($key_type, $opts{b});
 
     my $keyfile;
     unless ($keyfile = $opts{f}) {
@@ -125,12 +147,14 @@ else {
         die "Pass phrases do not match. Try again.\n"
             unless $pass eq $again;
     }
+    use Sys::Hostname;
+    my $comment = getpwuid($<) . '@' . hostname;
 
     $key->write_private($keyfile, $pass);
     chmod 0600, $keyfile or die "Can't chmod $keyfile to 0600: $!";
     debug("Your identification has been saved in $keyfile.");
 
-    my $pub = write_public($keyfile, $key);
+    my $pub = write_public($keyfile, $key, $comment);
     debug("Your public key has been saved in $pub.");
 
     debug("The key fingerprint is:");
@@ -144,7 +168,7 @@ sub write_public {
     local *FH;
     open FH, ">$pub" or die "Can't open public keyfile $pub: $!";
     print FH $key->dump_public;
-    print FH " ", $comment;
+    print FH " ", $comment, "\n";
     close FH or warn "Can't close public keyfile $pub: $!";
     $pub;
 }

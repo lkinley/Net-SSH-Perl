@@ -1,5 +1,16 @@
 Revision history for Net::SSH::Perl
 
+2.09 2016.10.26
+    - Fix creation of keys in ecdsa, ed25519 key classes
+    - Update eg/pssh-keygen to create ecdsa, ed25519 keys
+    - Handle hostkeys-00@openssh.com global requests
+    - Add support for 'CheckHostIP' and 'UpdateHostKeys' config options
+    - Refactor handling of '+' syntax in options
+    - Key fingerprints now output sha256-base64 by default.
+      (md5 can be specified with FingerprintHash config option)
+    - Add id_ed25519, id_ecdsa to default identity files
+    - Documentation updates in Perl.pm to reflect new functionality in 2.XX
+
 2.08 2016.10.14
     - Use sha512 instead of md5 in Net::SSH::Perl::Cipher->new_from_key_str()
       to provide ChachaPoly with enough key material

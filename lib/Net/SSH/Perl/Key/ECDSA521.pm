@@ -10,4 +10,6 @@ sub digest { 'SHA512' }
 
 sub siglen { 66 }
 
+sub keygen { shift->SUPER::keygen(521) }
+
 1;
