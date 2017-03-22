@@ -37,6 +37,7 @@ sub new_from_blob {
     my $b = Net::SSH::Perl::Buffer->new( MP => 'SSH1' );
     $b->append($blob);
     my $ssh_name = $b->get_str;
+    if (!exists($KEY_TYPES{$ssh_name})) { die("Unexpected key type provided"); }
     my $type = $KEY_TYPES{$ssh_name};
     __PACKAGE__->new($type, @_);
 }
