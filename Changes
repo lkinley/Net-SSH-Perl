@@ -1,5 +1,10 @@
 Revision history for Net::SSH::Perl
 
+2.12 2017.04.22
+    - Fix inefficiency in CTR, revealed by profiling with Devel::NYTProf
+    - Avoid warnings in Host from strange/invalid known_host entries
+    - Improve documentation of newer features
+
 2.11 2017.04.16
     - Packet bugfix: Introduced in 2.07, when ETM Mac is used, sometimes
       not enough incoming bytes were available to fully read stored MAC
