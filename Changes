@@ -1,5 +1,8 @@
 Revision history for Net::SSH::Perl
 
+2.14 2017.07.03
+    - DSA key bugfix: verify would fail if r had unnecessary leading zeros
+
 2.13 2017.06.30
     - Bug Fix: AES-CBC IV length needs to be blocksize, not keysize
     - Bug Fix: DES3 init needs to pass key as variable to avoid scalar error
