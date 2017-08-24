@@ -46,7 +46,7 @@ sub import {
     my @args = @_;
     for my $item (@args) {
         push @to_export,
-            $item =~ s/^:// ? @{ $EXPORT_TAGS{$item} } : $item;
+            $item =~ s/^:// ? @{ $EXPORT_TAGS{$item} || [] } : $item;
     }
 
     my %loaded;
