@@ -75,7 +75,7 @@ sub exchange {
     }
     if ($ssh->config->get('compression')) {
         $proposal[ PROPOSAL_COMP_ALGS_CTOS ] =
-        $proposal[ PROPOSAL_COMP_ALGS_STOC ] = "zlib";
+        $proposal[ PROPOSAL_COMP_ALGS_STOC ] = "zlib,none";
     }
     else {
         $proposal[ PROPOSAL_COMP_ALGS_CTOS ] =
